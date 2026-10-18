@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "B Yekan";
+  src: url("/fonts/b-yekan/Yekan.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-089F, U+08A0-08FF,
+    U+200C-200D, U+FB50-FDFF, U+FE70-FEFF;
+}
+
 .company-navigation {
   list-style: none;
 }
@@ -79,7 +89,7 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-destructive: var(--destructive);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: "B Yekan", Arial, Helvetica, sans-serif;
 }
 * {
   box-sizing: border-box;
@@ -90,7 +100,7 @@ html {
 }
 body {
   margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "B Yekan", Arial, Helvetica, sans-serif;
   color: var(--foreground);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;

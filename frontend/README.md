@@ -25,6 +25,12 @@ The demo credentials are available only during development unless explicitly con
 
 ## Included pages and behavior
 
+### Persian font
+
+B Yekan is bundled locally in `public/fonts/b-yekan/` and configured in `src/app/globals.css`. Persian text and digits use B Yekan throughout the interface, including inputs and company tables. The face uses Arabic/Persian Unicode ranges, `font-display: swap`, and the existing Arial/Helvetica fallback. The upstream SIL Open Font License and attribution are included alongside the font.
+
+This adds Persian typography; it does not translate the interface or change its overall text direction.
+
 | Route | Purpose |
 | --- | --- |
 | `/login` | Sign-in form, field validation, show/hide password, demo shortcut |
