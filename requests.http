@@ -1,5 +1,39 @@
 @baseUrl = https://localhost:7043
 @productId = 1
+@companyRecordId = 1
+
+### List companies
+GET {{baseUrl}}/api/companies?page=1&pageSize=20
+
+### Create company (copy the returned id into companyRecordId)
+POST {{baseUrl}}/api/companies
+Content-Type: application/json
+
+{
+  "name": "Acme Industries",
+  "address": "100 Market Street",
+  "companyID": "CMP-001",
+  "companycode": "ACME",
+  "isActive": true
+}
+
+### Read company
+GET {{baseUrl}}/api/companies/{{companyRecordId}}
+
+### Update company, including inactive status
+PUT {{baseUrl}}/api/companies/{{companyRecordId}}
+Content-Type: application/json
+
+{
+  "name": "Acme Industries",
+  "address": "200 Market Street",
+  "companyID": "CMP-001",
+  "companycode": "ACME",
+  "isActive": false
+}
+
+### Delete company
+DELETE {{baseUrl}}/api/companies/{{companyRecordId}}
 
 ### List (bounded pagination)
 GET {{baseUrl}}/api/products?page=1&pageSize=20

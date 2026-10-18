@@ -9,6 +9,7 @@ public static class DependencyInjection
     {
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<ICompanyService, CompanyService>();
         return services;
     }
 }

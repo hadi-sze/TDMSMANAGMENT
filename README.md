@@ -6,6 +6,37 @@ The solution, projects, and namespaces use `TDMSMANAGMENT`. The existing `ThreeT
 
 The `frontend/` folder includes a Next.js application with Radix UI and shadcn/ui components, a sign-in page, and a Cloudflare-inspired dashboard. It includes product CRUD screens, search, CSV export, inventory analytics, and account settings. Start with `cd frontend`, `npm install`, and `npm run dev`, then visit `http://127.0.0.1:3000` and use the demo shortcut. See [the frontend setup guide](frontend/README.md) to configure credentials and connect the .NET API.
 
+## Companies
+
+The sidebar includes an expandable **Companies → All companies / Add company** menu. The company directory includes search, active/inactive filtering, pagination, creation, editing, and deletion. The form defaults to active; inactive companies remain visible in the directory.
+
+The new `Companies` SQL Server table is managed by the `AddCompanies` Code First migration. `id` is an automatically generated integer primary key. `companyID` is a separate text identifier, preserving letters and leading zeros. The JSON contract is:
+
+```json
+{
+  "id": 1,
+  "name": "Acme Industries",
+  "address": "100 Market Street",
+  "companyID": "CMP-001",
+  "companycode": "ACME",
+  "isActive": true
+}
+```
+
+POST/PUT accept all fields except `id`. Name (200 characters), address (500), companyID (100), and companycode (50) are required, trimmed, nonblank strings. `isActive` must be an explicit JSON boolean; both true and false are valid. Company IDs and codes are not constrained to be unique. The menu is a navigation tree; this feature does not add company parent/child relationships.
+
+`GET/POST /api/companies` and `GET/PUT/DELETE /api/companies/{id}` follow the same success, validation, and not-found conventions as Products. GET supports `page` and `pageSize` (1–100). Company entities and repositories live in DAL, DTOs and validation in BLL, and `CompaniesController` in API. The Next.js company endpoints enforce the existing sign-in session and proxy to the .NET API in API mode; demo mode uses a separate local companies data file.
+
+Apply migrations on another machine:
+
+```powershell
+dotnet ef database update --project src/TDMSMANAGMENT.DAL --startup-project src/TDMSMANAGMENT.Api
+```
+
+The complete idempotent schema script is `database/Migrations.sql`, including both Products and Companies. `database/InitialCreate.sql` remains the original Products-only baseline. The local `ThreeTierProductsSample` database has the company migration applied.
+
+Verification: all **30 SQL Server integration tests** passed, including company CRUD, false/true active status, required-field validation, pagination, and existing Product regression tests. The frontend builds using Next.js’s supported Webpack builder; the scripts select it to avoid a local Turbopack worker failure. The DAL explicitly references `System.Security.Cryptography.Pkcs` 10.0.13 to resolve the NuGet audit build blocker in the prior transitive version.
+
 A controller-based REST API using ASP.NET Core 10, EF Core 10.0.12, SQL Server, and Code First migrations. Open `TDMSMANAGMENT.slnx` with a .NET 10-compatible IDE, or use the CLI below.
 
 ## Architecture

@@ -12,14 +12,16 @@ export default async function DashboardPage({
   const view = section?.[0] || "home";
   if (
     (section?.length || 0) > 1 ||
-    !["home", "products", "analytics", "settings"].includes(view)
+    !["home", "products", "companies", "analytics", "settings"].includes(view)
   )
     notFound();
   const session = await getSession();
   if (!session) redirect("/login");
   return (
     <Dashboard
-      view={view as "home" | "products" | "analytics" | "settings"}
+      view={
+        view as "home" | "products" | "companies" | "analytics" | "settings"
+      }
       email={session.email}
       mode={dataSource()}
     />

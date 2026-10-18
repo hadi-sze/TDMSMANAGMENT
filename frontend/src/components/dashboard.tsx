@@ -11,6 +11,7 @@ import {
   Bell,
   BookOpen,
   Box,
+  Building2,
   Check,
   ChevronDown,
   ChevronLeft,
@@ -44,6 +45,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Brand } from "@/components/brand";
+import { CompaniesPanel } from "@/components/companies-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -66,7 +68,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/products";
 
-type View = "home" | "products" | "analytics" | "settings";
+type View = "home" | "products" | "companies" | "analytics" | "settings";
 type ProductFields = {
   name: string;
   description: string;
@@ -91,6 +93,7 @@ const route = (view: View) =>
 const titleFor: Record<View, string> = {
   home: "Account home",
   products: "Products",
+  companies: "Companies",
   analytics: "Inventory analytics",
   settings: "Account settings",
 };
@@ -129,6 +132,7 @@ export function Dashboard({
   const [mobile, setMobile] = useState(false);
   const [recents, setRecents] = useState(true);
   const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [companiesOpen, setCompaniesOpen] = useState(view === "companies");
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
   const [help, setHelp] = useState<
@@ -176,6 +180,9 @@ export function Dashboard({
   useEffect(() => {
     setMobile(false);
   }, [pathname]);
+  useEffect(() => {
+    if (view === "companies") setCompaniesOpen(true);
+  }, [view]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
@@ -421,6 +428,52 @@ export function Dashboard({
             <span>Products</span>
             <span className="nav-count">{loading ? "–" : products.length}</span>
           </Link>
+          <button
+            className={cn("nav-item", view === "companies" && "active")}
+            aria-label="Companies menu"
+            aria-expanded={companiesOpen}
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setCompaniesOpen(true);
+              } else setCompaniesOpen(!companiesOpen);
+            }}
+          >
+            <Building2 />
+            <span>Companies</span>
+            <ChevronRight
+              className={cn("nav-chevron", companiesOpen && "rotate-90")}
+            />
+          </button>
+          {companiesOpen && (
+            <ul
+              className="recent-list company-navigation"
+              aria-label="Company navigation"
+            >
+              <li>
+                <Link
+                  href="/dashboard/companies"
+                  aria-current={
+                    view === "companies" && !searchParams.has("new")
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Building2 size={12} />
+                  All companies
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/companies?new=1"
+                  onClick={() => setMobile(false)}
+                >
+                  <Plus size={12} />
+                  Add company
+                </Link>
+              </li>
+            </ul>
+          )}
           <Link
             href="/dashboard/analytics"
             className={cn("nav-item", view === "analytics" && "active")}
@@ -744,6 +797,7 @@ export function Dashboard({
             </section>
           )}
 
+          {view === "companies" && <CompaniesPanel mode={mode} />}
           {view === "products" && (
             <section className="workspace-page">
               <div className="page-heading">
@@ -1380,6 +1434,8 @@ export function Dashboard({
                         <Home size={16} />
                       ) : key === "products" ? (
                         <Package size={16} />
+                      ) : key === "companies" ? (
+                        <Building2 size={16} />
                       ) : key === "analytics" ? (
                         <BarChart3 size={16} />
                       ) : (

@@ -1,5 +1,55 @@
 @import "tailwindcss";
 
+.company-navigation {
+  list-style: none;
+}
+.company-navigation li a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.company-navigation a[aria-current="page"] {
+  color: var(--primary);
+}
+.stats-grid.company-stats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.company-address > span {
+  display: block;
+  max-width: 230px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.company-active-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fcfcfc;
+}
+.company-active-field p {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  margin-top: 5px;
+}
+.company-active-field input {
+  height: 18px;
+  width: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+@media (max-width: 500px) {
+  .stats-grid.company-stats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}
+
 :root {
   --background: #fafafa;
   --foreground: #202124;

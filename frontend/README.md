@@ -30,10 +30,15 @@ The demo credentials are available only during development unless explicitly con
 | `/login` | Sign-in form, field validation, show/hide password, demo shortcut |
 | `/dashboard` | Cloudflare-inspired account-home layout and three illustrated launch cards |
 | `/dashboard/products` | Product CRUD, details, search, sorting, stock filters, pagination, CSV export |
+| `/dashboard/companies` | Company directory, search, status filter, add/edit/delete forms |
 | `/dashboard/analytics` | Actual stock and inventory-value summaries calculated from your products |
 | `/dashboard/settings` | Account details, security/connection information, sign out |
 
 The sidebar collapses on desktop and opens as a drawer on mobile. **Ctrl+K** / **Cmd+K** opens workspace search. Menus, dialogs, labels, and account tabs use Radix primitives through the shadcn/ui component files in `src/components/ui`. All illustrations are CSS/SVG; there are no remote images or font dependencies.
+
+**Companies** expands to **All companies** and **Add company**. The company form includes name, address, companyID, companycode, and an active checkbox. The database-generated record ID appears when editing. The company table shows every field, with active/inactive filtering and ten rows per page. Company IDs are text identifiers; leading zeros are preserved. Demo mode saves companies to `.data/companies.json`; API mode uses the new .NET `/api/companies` controller.
+
+The dev/build scripts use Next.js’s supported `--webpack` option because Turbopack’s CSS worker failed on this workstation.
 
 ## Connect the .NET 10 API
 
