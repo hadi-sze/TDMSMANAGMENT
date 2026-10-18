@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TDMSMANAGMENT.Api/TDMSMANAGMENT.Api.csproj" />
+    <Project Path="src/TDMSMANAGMENT.BLL/TDMSMANAGMENT.BLL.csproj" />
+    <Project Path="src/TDMSMANAGMENT.DAL/TDMSMANAGMENT.DAL.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TDMSMANAGMENT.IntegrationTests/TDMSMANAGMENT.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

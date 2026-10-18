@@ -1,0 +1,43 @@
+@baseUrl = https://localhost:7043
+@productId = 1
+
+### List (bounded pagination)
+GET {{baseUrl}}/api/products?page=1&pageSize=20
+
+### Create; copy the returned ID into productId
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": "Keyboard",
+  "description": "Wireless keyboard",
+  "price": 49.95,
+  "stockQuantity": 12
+}
+
+### Read
+GET {{baseUrl}}/api/products/{{productId}}
+
+### Replace editable fields
+PUT {{baseUrl}}/api/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Keyboard Pro",
+  "description": "Updated description",
+  "price": 59.95,
+  "stockQuantity": 8
+}
+
+### Delete
+DELETE {{baseUrl}}/api/products/{{productId}}
+
+### Validation failure (400)
+POST {{baseUrl}}/api/products
+Content-Type: application/json
+
+{
+  "name": " ",
+  "price": -5,
+  "stockQuantity": -1
+}
