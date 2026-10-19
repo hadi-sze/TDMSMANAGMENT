@@ -23,9 +23,34 @@ The new `Companies` SQL Server table is managed by the `AddCompanies` Code First
 }
 ```
 
-POST/PUT accept all fields except `id`. Name (200 characters), address (500), companyID (100), and companycode (50) are required, trimmed, nonblank strings. `isActive` must be an explicit JSON boolean; both true and false are valid. Company IDs and codes are not constrained to be unique. The menu is a navigation tree; this feature does not add company parent/child relationships.
+POST/PUT accept all fields except `id`. Name (200 characters), address (500), companyID (100), and companycode (50) are required, trimmed, nonblank strings. `isActive` must be an explicit JSON boolean; both true and false are valid. Company IDs and codes are not constrained to be unique. Subcompanies are linked to companies through the separate `SubCompanies` table described below.
 
 `GET/POST /api/companies` and `GET/PUT/DELETE /api/companies/{id}` follow the same success, validation, and not-found conventions as Products. GET supports `page` and `pageSize` (1–100). Company entities and repositories live in DAL, DTOs and validation in BLL, and `CompaniesController` in API. The Next.js company endpoints enforce the existing sign-in session and proxy to the .NET API in API mode; demo mode uses a separate local companies data file.
+
+## Subcompanies
+
+The company tree now includes **Subcompanies** and **Add subcompany**. Company row menus can open or add subcompanies with that parent preselected. `/dashboard/subcompanies` provides search, parent/status filters, pagination, and create/edit/delete forms using the existing shadcn/ui, Joy UI, RTL, and Yekan setup.
+
+The `AddSubCompanies` Code First migration adds:
+
+| Column | Type | Rule |
+| --- | --- | --- |
+| `Id` | int | Generated primary key |
+| `Name` | nvarchar(200) | Required, trimmed, nonblank |
+| `CompanyId` | int | Required indexed foreign key to `Companies.Id` |
+| `IsActive` | bit | Required boolean |
+
+`CompanyId` references the parent's **numeric primary key**. It is separate from the existing company `companyID` text/business identifier. One company can have many subcompanies. POST/PUT requests with missing parent IDs return HTTP 400; the database also enforces the foreign key. Deleting a company with children returns HTTP 409. Remove or reassign its subcompanies first; deleting a subcompany does not delete its parent. Demo mode enforces the same relationship using the shared write queue.
+
+Endpoints: `GET/POST /api/subcompanies`, `GET/PUT/DELETE /api/subcompanies/{id}`. GET supports `page`, `pageSize` (1–100), and optional `companyId`. POST/PUT accept:
+
+```json
+{ "name": "Tehran branch", "companyId": 2, "isActive": false }
+```
+
+Responses include the generated `id`. DAL owns the entity and repository, BLL validates parent existence and DTOs, and `SubCompaniesController` handles HTTP. Frontend routes require the existing login session and same-origin mutation checks.
+
+Verification: 44 SQL Server integration tests pass, including CRUD, reassignment, parent filtering, invalid parents, direct database FK enforcement, and restricted parent deletion. The isolated frontend demo-store test covers concurrent child creation/parent deletion. The production Next.js build and authenticated proxy-to-SQL CRUD checks passed; temporary QA records were removed.
 
 Apply migrations on another machine:
 
@@ -33,9 +58,9 @@ Apply migrations on another machine:
 dotnet ef database update --project src/TDMSMANAGMENT.DAL --startup-project src/TDMSMANAGMENT.Api
 ```
 
-The complete idempotent schema script is `database/Migrations.sql`, including both Products and Companies. `database/InitialCreate.sql` remains the original Products-only baseline. The local `ThreeTierProductsSample` database has the company migration applied.
+The complete idempotent schema script is `database/Migrations.sql`, including Products, Companies, and SubCompanies. `database/InitialCreate.sql` remains the original Products-only baseline. The local `ThreeTierProductsSample` database has both company and subcompany migrations applied.
 
-Verification: all **30 SQL Server integration tests** passed, including company CRUD, false/true active status, required-field validation, pagination, and existing Product regression tests. The frontend builds using Next.js’s supported Webpack builder; the scripts select it to avoid a local Turbopack worker failure. The DAL explicitly references `System.Security.Cryptography.Pkcs` 10.0.13 to resolve the NuGet audit build blocker in the prior transitive version.
+Verification: all **44 SQL Server integration tests** passed, including company CRUD, false/true active status, required-field validation, pagination, and existing Product regression tests. The frontend builds using Next.js’s supported Webpack builder; the scripts select it to avoid a local Turbopack worker failure. The DAL explicitly references `System.Security.Cryptography.Pkcs` 10.0.13 to resolve the NuGet audit build blocker in the prior transitive version.
 
 A controller-based REST API using ASP.NET Core 10, EF Core 10.0.12, SQL Server, and Code First migrations. Open `TDMSMANAGMENT.slnx` with a .NET 10-compatible IDE, or use the CLI below.
 

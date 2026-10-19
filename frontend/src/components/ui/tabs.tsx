@@ -2,7 +2,9 @@
 import * as React from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
 import { cn } from "@/lib/utils";
-export const Tabs = TabsPrimitive.Root;
+export function Tabs(props: React.ComponentProps<typeof TabsPrimitive.Root>) {
+  return <TabsPrimitive.Root dir="rtl" {...props} />;
+}
 export function TabsList({
   className,
   ...props
@@ -24,7 +26,7 @@ export function TabsTrigger({
   return (
     <TabsPrimitive.Trigger
       className={cn(
-        "rounded-md px-3 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-xs",
+        "settings-tab-trigger rounded-md px-3 py-1 text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring data-[state=active]:bg-white data-[state=active]:text-foreground data-[state=active]:shadow-xs",
         className,
       )}
       {...props}
@@ -37,7 +39,7 @@ export function TabsContent({
 }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content
-      className={cn("mt-5 outline-none", className)}
+      className={cn("settings-tab-content mt-5 outline-none", className)}
       {...props}
     />
   );

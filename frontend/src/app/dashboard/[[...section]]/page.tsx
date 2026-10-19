@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import { Dashboard } from "@/components/dashboard";
 import { getSession } from "@/lib/auth";
 import { dataSource } from "@/lib/products";
-export const metadata = { title: "Workspace" };
+export const metadata = { title: "فضای کاری" };
 export default async function DashboardPage({
   params,
 }: {
@@ -12,7 +12,14 @@ export default async function DashboardPage({
   const view = section?.[0] || "home";
   if (
     (section?.length || 0) > 1 ||
-    !["home", "products", "companies", "analytics", "settings"].includes(view)
+    ![
+      "home",
+      "products",
+      "companies",
+      "subcompanies",
+      "analytics",
+      "settings",
+    ].includes(view)
   )
     notFound();
   const session = await getSession();
@@ -20,7 +27,13 @@ export default async function DashboardPage({
   return (
     <Dashboard
       view={
-        view as "home" | "products" | "companies" | "analytics" | "settings"
+        view as
+          | "home"
+          | "products"
+          | "companies"
+          | "subcompanies"
+          | "analytics"
+          | "settings"
       }
       email={session.email}
       mode={dataSource()}

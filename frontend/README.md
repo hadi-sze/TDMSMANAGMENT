@@ -1,6 +1,6 @@
 # TDMSMANAGMENT frontend
 
-Next.js App Router, React, TypeScript, Tailwind CSS, Radix UI, and locally owned shadcn/ui components. The dashboard takes its layout from the supplied Cloudflare account-home reference and uses TDMSMANAGMENT branding. It does not communicate with your Cloudflare account.
+Next.js App Router, React, TypeScript, Tailwind CSS, Radix UI, locally owned shadcn/ui components, and MUI Joy UI. The dashboard takes its layout from the supplied Cloudflare account-home reference and uses TDMSMANAGMENT branding. It does not communicate with your Cloudflare account.
 
 ## Start locally
 
@@ -23,13 +23,46 @@ Password: TdmsDemo!2026
 
 The demo credentials are available only during development unless explicitly configured. Demo product changes are persisted to `frontend/.data/products.json`. This file is excluded from Git and the deliverable ZIP. This demo store is intended for a single local server process; use the .NET API for a deployed or multi-instance application.
 
+## UI component libraries
+
+Both libraries are used in the live pages:
+
+| Library | Components and usage |
+| --- | --- |
+| shadcn/ui + Radix | Buttons, text inputs, labels, dialogs, dropdown action menus, and account tabs |
+| MUI Joy UI | Company/product tables, status chips, stock/status filters, company active switch, form error alerts, and loading indicators |
+
+`src/components/theme-registry.tsx` integrates Joy's `CssVarsProvider` with Emotion and Next.js server style insertion. The theme uses the existing orange palette and Yekan/Arial font stack. The Emotion RTL plugin mirrors Joy styles, while shadcn components use their existing logical CSS and Radix direction props. The global stylesheet remains responsible for the page reset so both libraries share the same base styles.
+
+Joy UI is pinned to the published `5.0.0-beta.52` version, with compatible Emotion dependencies recorded in the lockfile. The shadcn component source remains owned by this project in `src/components/ui`, and `components.json` records RTL mode. Shared Joy filter/alert helpers are in `src/components/ui/joy-controls.tsx`.
+
+`OrbitRing` from the `@loading-ui` shadcn registry is available in `src/components/orbit-ring.tsx`:
+
+```tsx
+import { OrbitRing } from "@/components/orbit-ring";
+
+<OrbitRing className="size-6 text-primary" />
+```
+
+Its decorative ring stays centered in RTL, and it stops animating when reduced motion is enabled. The registry is recorded in `components.json` for future additions.
+
+References: [Joy UI App Router integration](https://mui.com/joy-ui/integrations/next-js-app-router/), [Joy UI RTL setup](https://mui.com/joy-ui/customization/right-to-left/), [shadcn RTL](https://ui.shadcn.com/docs/rtl).
+
 ## Included pages and behavior
+
+### Right-to-left layout
+
+The website defaults to RTL through `dir="rtl"` on the document. The desktop sidebar and mobile drawer open on the right; navigation, tables, dialogs, and login layouts follow the same direction. Logical CSS spacing preserves responsive behavior, and Radix menus/tabs receive RTL direction for positioning and keyboard navigation. Email addresses, passwords, prices, and numeric inputs preserve LTR character order. Company/product names and descriptions support automatic text direction. Interface titles, navigation, labels, buttons, placeholders, and dialogs are in Persian. The document uses `lang="fa"`. Brand names, addresses, codes, route/API keys, and connection identifiers retain their original values.
+
+### Uploaded brand logo
+
+The shared `Brand` component uses the user-supplied NIOC image at `public/branding/nioc-logo.webp`. The original transparent WebP is copied without modification and displayed with `next/image` at a contained aspect ratio. It appears in the desktop/mobile sidebar, login page, and not-found page. The project name remains TDMSMANAGMENT.
 
 ### Persian font
 
-B Yekan is bundled locally in `public/fonts/b-yekan/` and configured in `src/app/globals.css`. Persian text and digits use B Yekan throughout the interface, including inputs and company tables. The face uses Arabic/Persian Unicode ranges, `font-display: swap`, and the existing Arial/Helvetica fallback. The upstream SIL Open Font License and attribution are included alongside the font.
+The user-provided Yekan font is bundled in `public/fonts/yekan/` and registered in `src/app/globals.css` using WOFF with TTF/OTF/EOT fallbacks. Persian text and digits use Yekan throughout the interface, including inputs and company tables. The face uses Arabic/Persian Unicode ranges and `font-display: swap`; Latin text keeps Arial/Helvetica. The original B Yekan WOFF2 remains a fallback with its upstream license and attribution. The uploaded FontLab `.vfc` source is retained in `design/fonts/` outside the public web directory.
 
-This adds Persian typography; it does not translate the interface or change its overall text direction.
+Persian labels and headings use the uploaded Yekan font with the existing RTL layout.
 
 | Route | Purpose |
 | --- | --- |
@@ -37,14 +70,25 @@ This adds Persian typography; it does not translate the interface or change its 
 | `/dashboard` | Cloudflare-inspired account-home layout and three illustrated launch cards |
 | `/dashboard/products` | Product CRUD, details, search, sorting, stock filters, pagination, CSV export |
 | `/dashboard/companies` | Company directory, search, status filter, add/edit/delete forms |
+| `/dashboard/subcompanies` | Subcompany CRUD with parent-company selection, parent/status filters, and pagination |
 | `/dashboard/analytics` | Actual stock and inventory-value summaries calculated from your products |
 | `/dashboard/settings` | Account details, security/connection information, sign out |
 
 The sidebar collapses on desktop and opens as a drawer on mobile. **Ctrl+K** / **Cmd+K** opens workspace search. Menus, dialogs, labels, and account tabs use Radix primitives through the shadcn/ui component files in `src/components/ui`. All illustrations are CSS/SVG; there are no remote images or font dependencies.
 
-**Companies** expands to **All companies** and **Add company**. The company form includes name, address, companyID, companycode, and an active checkbox. The database-generated record ID appears when editing. The company table shows every field, with active/inactive filtering and ten rows per page. Company IDs are text identifiers; leading zeros are preserved. Demo mode saves companies to `.data/companies.json`; API mode uses the new .NET `/api/companies` controller.
+Navigation groups animate when expanded or collapsed. The desktop sidebar resizes smoothly, the mobile drawer slides in/out, menus and dialogs animate on opening and closing, and account tabs fade in when selected. Motion uses CSS transitions/keyframes and the existing Radix presence handling; no additional animation package is required. Closed navigation panels are inert, and the existing `prefers-reduced-motion` rule reduces all animations and transitions.
+
+**Companies** expands to **All companies** and **Add company**. The company form includes name, address, companyID, companycode, and an active switch. The database-generated record ID appears when editing. The company table shows every field, with active/inactive filtering and ten rows per page. Company IDs are text identifiers; leading zeros are preserved. Demo mode saves companies to `.data/companies.json`; API mode uses the new .NET `/api/companies` controller.
 
 The dev/build scripts use Next.js’s supported `--webpack` option because Turbopack’s CSS worker failed on this workstation.
+
+### Subcompanies
+
+The Companies tree and each company row menu link to the subcompany directory. Add/edit forms select an existing parent company by its numeric record ID. Fields are `id` (generated), `name`, `companyId`, and `isActive`. The parent company's text `companyID` remains a separate business identifier. The status chips use **فعال / غیرفعال**. The new page uses the previously added `OrbitRing` while loading.
+
+`/api/subcompanies` and `/api/subcompanies/[id]` provide authenticated CRUD in both API and demo modes. The list supports an optional `companyId` query parameter. Parent deletion is blocked while children exist. Demo parent/child writes share one queue to prevent orphan records during concurrent requests.
+
+Run the isolated demo relationship test with `npm run test:demo`. It uses a unique temporary directory and does not modify the application's data files. SQL integration tests in the solution cover database foreign keys and API behavior. The live frontend-to-API CRUD check also passed, and its temporary records were removed.
 
 ## Connect the .NET 10 API
 
@@ -124,9 +168,14 @@ frontend/
 
 Reference: [Cloudflare account home](https://dash.cloudflare.com/6bdbf200cb2a91eb0762c3c0d0873cbb/home). Only the layout was referenced; private account information is not included in the source.
 
-## Verification — October 18, 2026
+## Verification — October 19, 2026
 
 - Production build and TypeScript checks passed using Next.js 16.4.2.
+- Persian titles, navigation, table/form labels, metadata, and notification accessibility labels were verified. The uploaded NIOC logo appears in the shared brand component; the login page and logo asset return HTTP 200.
+- Joy UI filters were checked on companies and products, and the active switch was toggled with both its control and shadcn label inside a dialog. Whitespace-only company input was rejected before persistence and displayed the Joy error alert.
+- Browser logs showed no application hydration errors after the Joy theme registry was added. Dependency installation reported zero vulnerabilities.
+- Browser verified the RTL desktop sidebar, mobile drawer at 390px, Persian company form, RTL dropdown direction, and ArrowLeft navigation between account tabs.
+- Uploaded Yekan files return HTTP 200, the copied WOFF matches the original SHA-256, and Persian company names use the Yekan font stack.
 - Browser verified sign-in, home-page actions, product creation/search/editing, command search, and navigation.
 - Checked the dashboard at a 390px viewport and verified the mobile navigation drawer.
 - HTTP checks passed authentication, same-origin protection, validation, complete demo CRUD, persistence, and logout.

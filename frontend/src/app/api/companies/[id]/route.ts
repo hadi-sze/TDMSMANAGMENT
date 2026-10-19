@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getSession, sameOrigin } from "@/lib/auth";
 import {
   dataSource,
+  CompanyHasSubCompaniesError,
   demoCompanies,
   demoCompanyWrite,
   companySchema,
@@ -61,7 +62,9 @@ async function change(
     return result
       ? new Response(null, { status: 204 })
       : NextResponse.json({ error: "Company not found." }, { status: 404 });
-  } catch {
+  } catch (error) {
+    if (error instanceof CompanyHasSubCompaniesError)
+      return NextResponse.json({ error: error.message }, { status: 409 });
     return NextResponse.json(
       { error: "The change could not be saved. Please try again." },
       { status: 503 },

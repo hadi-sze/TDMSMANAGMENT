@@ -68,3 +68,39 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261019064801_AddSubCompanies'
+)
+BEGIN
+    CREATE TABLE [SubCompanies] (
+        [Id] int NOT NULL IDENTITY,
+        [Name] nvarchar(200) NOT NULL,
+        [CompanyId] int NOT NULL,
+        [IsActive] bit NOT NULL,
+        CONSTRAINT [PK_SubCompanies] PRIMARY KEY ([Id]),
+        CONSTRAINT [FK_SubCompanies_Companies_CompanyId] FOREIGN KEY ([CompanyId]) REFERENCES [Companies] ([Id]) ON DELETE NO ACTION
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261019064801_AddSubCompanies'
+)
+BEGIN
+    CREATE INDEX [IX_SubCompanies_CompanyId] ON [SubCompanies] ([CompanyId]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261019064801_AddSubCompanies'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261019064801_AddSubCompanies', N'10.0.12');
+END;
+
+COMMIT;
+GO
+

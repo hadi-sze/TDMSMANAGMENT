@@ -95,6 +95,48 @@ namespace TDMSMANAGMENT.DAL.Migrations
                             t.HasCheckConstraint("CK_Products_StockQuantity", "[StockQuantity] >= 0");
                         });
                 });
+
+            modelBuilder.Entity("TDMSMANAGMENT.DAL.Models.SubCompany", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CompanyId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("SubCompanies", (string)null);
+                });
+
+            modelBuilder.Entity("TDMSMANAGMENT.DAL.Models.SubCompany", b =>
+                {
+                    b.HasOne("TDMSMANAGMENT.DAL.Models.Company", "Company")
+                        .WithMany("SubCompanies")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
+            modelBuilder.Entity("TDMSMANAGMENT.DAL.Models.Company", b =>
+                {
+                    b.Navigation("SubCompanies");
+                });
 #pragma warning restore 612, 618
         }
     }

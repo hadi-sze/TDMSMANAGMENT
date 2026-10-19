@@ -17,6 +17,7 @@ import { Brand } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { FormAlert } from "@/components/ui/joy-controls";
 import {
   Dialog,
   DialogContent,
@@ -45,13 +46,13 @@ export function LoginForm({ demo }: { demo: boolean }) {
       });
       const body = await response.json();
       if (!response.ok) {
-        setError(body.error || "Unable to sign in.");
+        setError(body.error || "ورود انجام نشد.");
         return;
       }
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Unable to connect. Please try again.");
+      setError("اتصال برقرار نشد. دوباره تلاش کنید.");
     } finally {
       setPending(false);
     }
@@ -59,22 +60,22 @@ export function LoginForm({ demo }: { demo: boolean }) {
   return (
     <main className="login-page">
       <section className="login-story">
-        <Link href="/login" aria-label="TDMSMANAGMENT home">
+        <Link href="/login" aria-label="صفحه اصلی TDMSMANAGMENT">
           <Brand />
         </Link>
         <div className="story-content">
           <span className="eyebrow">
-            <span className="status-dot" /> YOUR WORKSPACE, CONNECTED
+            <span className="status-dot" /> فضای کاری یکپارچه شما
           </span>
           <h1>
-            Less managing.
+            مدیریت ساده‌تر.
             <br />
-            More <span>possibility.</span>
+            فرصت‌های <span>بیشتر.</span>
           </h1>
           <p>
-            A little clarity goes a long way. Bring your products,
-            <br className="desktop-break" /> inventory, and everyday work
-            together.
+            محصولات، موجودی و کارهای روزانه را
+            <br className="desktop-break" /> در فضایی یکپارچه و منظم مدیریت
+            کنید.
           </p>
           <div className="workspace-art" aria-hidden="true">
             <div className="art-orbit orbit-one" />
@@ -92,7 +93,7 @@ export function LoginForm({ demo }: { demo: boolean }) {
                   <i />
                   <i />
                 </span>
-                <span>YOUR WORKSPACE</span>
+                <span>فضای کاری شما</span>
                 <span className="tiny-status" />
               </div>
               <div className="art-window-body">
@@ -140,31 +141,31 @@ export function LoginForm({ demo }: { demo: boolean }) {
               </div>
             </div>
             <div className="art-caption">
-              <span className="status-dot" /> Everything in its right place.
+              <span className="status-dot" /> همه چیز در جای خود.
             </div>
           </div>
         </div>
         <div className="story-footer">
-          <span>Built for a more organized day.</span>
+          <span>برای روزی منظم‌تر ساخته شده است.</span>
           <span>© {new Date().getFullYear()} TDMSMANAGMENT</span>
         </div>
       </section>
       <section className="login-panel">
         <div className="login-top">
-          <span>Need a hand getting started?</span>
+          <span>برای شروع به راهنما نیاز دارید؟</span>
           <button onClick={() => setHelp(true)}>
-            Get help <ArrowRight size={13} />
+            دریافت راهنما <ArrowRight size={13} />
           </button>
         </div>
         <div className="login-form-wrap">
           <span className="login-icon">
             <LockKeyhole size={22} />
           </span>
-          <h2>Welcome back.</h2>
-          <p className="login-subtitle">Sign in to your TDMS workspace.</p>
+          <h2>خوش آمدید.</h2>
+          <p className="login-subtitle">وارد فضای کاری TDMS خود شوید.</p>
           <form onSubmit={signIn} className="login-form">
             <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
+              <Label htmlFor="email">نشانی ایمیل</Label>
               <Input
                 id="email"
                 type="email"
@@ -177,12 +178,13 @@ export function LoginForm({ demo }: { demo: boolean }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">رمز عبور</Label>
               <div className="password-wrap">
                 <Input
                   id="password"
+                  dir="ltr"
                   type={visible ? "text" : "password"}
-                  placeholder="Enter your password"
+                  placeholder="رمز عبور را وارد کنید"
                   autoComplete="current-password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
@@ -192,17 +194,15 @@ export function LoginForm({ demo }: { demo: boolean }) {
                 <button
                   type="button"
                   onClick={() => setVisible(!visible)}
-                  aria-label={visible ? "Hide password" : "Show password"}
+                  aria-label={
+                    visible ? "پنهان کردن رمز عبور" : "نمایش رمز عبور"
+                  }
                 >
                   {visible ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
-            {error && (
-              <p role="alert" className="form-error">
-                {error}
-              </p>
-            )}
+            {error && <FormAlert>{error}</FormAlert>}
             <Button
               type="submit"
               size="lg"
@@ -213,14 +213,14 @@ export function LoginForm({ demo }: { demo: boolean }) {
                 <LoaderCircle className="animate-spin" />
               ) : (
                 <>
-                  Sign in <ArrowRight />
+                  ورود <ArrowRight />
                 </>
               )}
             </Button>
           </form>
           {demo && (
             <div className="demo-login">
-              <span>Just exploring?</span>
+              <span>می‌خواهید محیط را امتحان کنید؟</span>
               <button
                 onClick={() => {
                   setEmail("admin@tdms.local");
@@ -228,34 +228,33 @@ export function LoginForm({ demo }: { demo: boolean }) {
                   setError("");
                 }}
               >
-                Fill demo credentials <ArrowRight size={13} />
+                تکمیل اطلاعات ورود آزمایشی <ArrowRight size={13} />
               </button>
             </div>
           )}
           <p className="login-security">
-            <ShieldCheck size={14} /> Your workspace. A secure connection.
+            <ShieldCheck size={14} /> فضای کاری شما با اتصالی امن.
           </p>
         </div>
         <div className="login-bottom">
-          <span className="status-dot" /> All systems ready{" "}
+          <span className="status-dot" /> سامانه آماده است{" "}
           <span className="login-bottom-right">TDMSMANAGMENT · v1.0</span>
         </div>
       </section>
       <Dialog open={help} onOpenChange={setHelp}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Getting into your workspace</DialogTitle>
+            <DialogTitle>راهنمای ورود به فضای کاری</DialogTitle>
             <DialogDescription>
               {demo
-                ? "Use “Fill demo credentials” to explore this local preview, then select Sign in."
-                : "Use the account configured by your workspace administrator."}{" "}
-              If you need to change your credentials, ask your administrator to
-              update the TDMS_LOGIN_EMAIL and TDMS_LOGIN_PASSWORD server
-              settings.
+                ? "برای آزمایش محیط، «تکمیل اطلاعات ورود آزمایشی» و سپس «ورود» را انتخاب کنید."
+                : "از حسابی استفاده کنید که مدیر فضای کاری تنظیم کرده است."}{" "}
+              برای تغییر اطلاعات ورود، از مدیر بخواهید تنظیمات TDMS_LOGIN_EMAIL
+              و TDMS_LOGIN_PASSWORD را در سرور به‌روزرسانی کند.
             </DialogDescription>
           </DialogHeader>
           <Button variant="outline" onClick={() => setHelp(false)}>
-            Got it
+            متوجه شدم
           </Button>
         </DialogContent>
       </Dialog>

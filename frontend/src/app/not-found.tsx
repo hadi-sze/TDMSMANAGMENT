@@ -4,9 +4,9 @@ export default function NotFound() {
   return (
     <main className="not-found">
       <Brand />
-      <h1>This page has moved out of sight.</h1>
-      <p>Let’s get you back to your workspace.</p>
-      <Link href="/dashboard">Back to dashboard →</Link>
+      <h1>این صفحه پیدا نشد.</h1>
+      <p>به فضای کاری خود بازگردید.</p>
+      <Link href="/dashboard">بازگشت به داشبورد</Link>
     </main>
   );
 }

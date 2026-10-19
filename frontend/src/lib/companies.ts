@@ -19,6 +19,7 @@ export const companySchema = z.object({
   companycode: z.string().trim().min(1, "Enter the company code.").max(50),
   isActive: z.boolean(),
 });
+export class CompanyHasSubCompaniesError extends Error {}
 export type CompanyWrite = z.infer<typeof companySchema>;
 
 const file = path.join(process.cwd(), ".data", "companies.json");
@@ -59,6 +60,23 @@ export function demoCompanyWrite(
         result = company;
       }
       if (action === "delete") {
+        let children: { subcompanies: { companyId: number }[] } = {
+          subcompanies: [],
+        };
+        try {
+          children = JSON.parse(
+            await readFile(
+              path.join(process.cwd(), ".data", "subcompanies.json"),
+              "utf8",
+            ),
+          );
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+        }
+        if (children.subcompanies.some((child) => child.companyId === id))
+          throw new CompanyHasSubCompaniesError(
+            "Remove or reassign this company's subcompanies before deleting it.",
+          );
         if (!store.companies.some((item) => item.id === id)) return null;
         store.companies = store.companies.filter((item) => item.id !== id);
         result = true;

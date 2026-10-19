@@ -2,7 +2,11 @@
 import * as React from "react";
 import * as DropdownPrimitive from "@radix-ui/react-dropdown-menu";
 import { cn } from "@/lib/utils";
-export const DropdownMenu = DropdownPrimitive.Root;
+export function DropdownMenu(
+  props: React.ComponentProps<typeof DropdownPrimitive.Root>,
+) {
+  return <DropdownPrimitive.Root dir="rtl" {...props} />;
+}
 export const DropdownMenuTrigger = DropdownPrimitive.Trigger;
 export function DropdownMenuContent({
   className,
@@ -14,7 +18,7 @@ export function DropdownMenuContent({
       <DropdownPrimitive.Content
         sideOffset={sideOffset}
         className={cn(
-          "z-50 min-w-48 overflow-hidden rounded-lg border bg-white p-1 shadow-lg",
+          "dropdown-menu-content z-50 min-w-48 overflow-hidden rounded-lg border bg-white p-1 shadow-lg",
           className,
         )}
         {...props}

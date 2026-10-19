@@ -33,6 +33,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { Company } from "@/lib/companies";
+import Table from "@mui/joy/Table";
+import Chip from "@mui/joy/Chip";
+import Switch from "@mui/joy/Switch";
+import { OrbitRing } from "@/components/orbit-ring";
+import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
 
 type Fields = Omit<Company, "id">;
 const empty: Fields = {
@@ -50,10 +55,10 @@ async function message(response: Response) {
       (body.errors && Object.values(body.errors).flat()[0]) ||
       body.detail ||
       body.title ||
-      "The company could not be saved."
+      "ذخیره شرکت انجام نشد."
     );
   } catch {
-    return "The request could not be completed. Please try again.";
+    return "درخواست انجام نشد. دوباره تلاش کنید.";
   }
 }
 
@@ -136,11 +141,11 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
         setFormError(await message(response));
         return;
       }
-      toast.success(editor.company ? "Company updated" : "Company added");
+      toast.success(editor.company ? "شرکت به‌روزرسانی شد" : "شرکت اضافه شد");
       setEditor(null);
       await refresh();
     } catch {
-      setFormError("Unable to save this company. Please try again.");
+      setFormError("شرکت ذخیره نشد. دوباره تلاش کنید.");
     } finally {
       setSaving(false);
     }
@@ -156,11 +161,11 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
         toast.error(await message(response));
         return;
       }
-      toast.success("Company deleted");
+      toast.success("شرکت حذف شد");
       setDeleting(null);
       await refresh();
     } catch {
-      toast.error("Unable to delete this company. Please try again.");
+      toast.error("شرکت حذف نشد. دوباره تلاش کنید.");
     } finally {
       setSaving(false);
     }
@@ -188,38 +193,38 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
     <section className="workspace-page companies-page">
       <div className="page-heading">
         <div>
-          <span className="section-eyebrow">YOUR ORGANIZATIONS</span>
-          <h1>Companies</h1>
-          <p>Company details, organized in one place.</p>
+          <span className="section-eyebrow">سازمان‌های شما</span>
+          <h1>شرکت‌ها</h1>
+          <p>اطلاعات شرکت‌ها، منظم و یکپارچه.</p>
         </div>
         <Button onClick={() => openEditor()}>
-          <Plus /> Add company
+          <Plus /> افزودن شرکت
         </Button>
       </div>
       <div className="stats-grid company-stats">
         <div className="stat-card">
           <div>
-            <span>Total companies</span>
+            <span>تعداد شرکت‌ها</span>
             <Building2 size={16} />
           </div>
           <strong>{loading ? "—" : companies.length}</strong>
-          <p>In your workspace</p>
+          <p>در فضای کاری شما</p>
         </div>
         <div className="stat-card">
           <div>
-            <span>Active companies</span>
+            <span>شرکت‌های فعال</span>
             <Check size={16} />
           </div>
           <strong>{loading ? "—" : active}</strong>
-          <p>Available for your operations</p>
+          <p>آماده برای فعالیت</p>
         </div>
         <div className="stat-card">
           <div>
-            <span>Inactive companies</span>
+            <span>شرکت‌های غیرفعال</span>
             <Building2 size={16} />
           </div>
           <strong>{loading ? "—" : companies.length - active}</strong>
-          <p>Retained for your records</p>
+          <p>نگهداری‌شده در سوابق</p>
         </div>
       </div>
       <div className="catalog-panel">
@@ -227,8 +232,8 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
           <div className="catalog-search">
             <Search size={16} />
             <Input
-              aria-label="Search companies"
-              placeholder="Search companies..."
+              aria-label="جستجوی شرکت‌ها"
+              placeholder="جستجوی شرکت‌ها…"
               value={query}
               onChange={(event) => {
                 setQuery(event.target.value);
@@ -237,54 +242,55 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             />
           </div>
           <div className="catalog-toolbar-right">
-            <select
-              aria-label="Filter company status"
+            <FilterSelect
+              label="فیلتر وضعیت شرکت"
               value={status}
-              onChange={(event) => {
-                setStatus(event.target.value);
+              onValueChange={(value) => {
+                setStatus(value);
                 setPage(1);
               }}
-            >
-              <option value="all">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
+              options={[
+                { value: "all", label: "همه وضعیت‌ها" },
+                { value: "active", label: "فعال" },
+                { value: "inactive", label: "غیرفعال" },
+              ]}
+            />
           </div>
         </div>
         {error ? (
           <div className="empty-state" role="alert">
             <Building2 size={28} />
-            <h3>Let’s reconnect.</h3>
+            <h3>اتصال را دوباره برقرار کنید.</h3>
             <p>{error}</p>
             <Button variant="outline" onClick={() => void refresh()}>
-              Try again
+              تلاش دوباره
             </Button>
           </div>
         ) : loading ? (
           <div className="loading-state" role="status">
-            <LoaderCircle className="animate-spin" size={22} />
-            Loading companies...
+            <OrbitRing className="size-6 text-primary" />
+            در حال بارگذاری شرکت‌ها…
           </div>
         ) : (
           <>
             <div className="table-scroll">
-              <table className="product-table company-table">
+              <Table hoverRow size="sm" className="product-table company-table">
                 <thead>
                   <tr>
-                    <th>Company name / record ID</th>
-                    <th>Company ID</th>
-                    <th>Company code</th>
-                    <th>Address</th>
-                    <th>Status</th>
+                    <th>نام شرکت</th>
+                    <th>شناسه شرکت</th>
+                    <th>کد شرکت</th>
+                    <th>نشانی</th>
+                    <th>وضعیت</th>
                     <th>
-                      <span className="sr-only">Actions</span>
+                      <span className="sr-only">عملیات</span>
                     </th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((company) => (
                     <tr key={company.id}>
-                      <td>
+                      <td data-label="نام شرکت">
                         <button
                           className="product-name"
                           onClick={() => openEditor(company)}
@@ -293,33 +299,44 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                             <Building2 size={19} />
                           </span>
                           <span>
-                            <strong>{company.name}</strong>
-                            <small>ID: {company.id}</small>
+                            <strong dir="auto">{company.name}</strong>
+                            <small className="record-id">
+                              شناسه: {company.id}
+                            </small>
                           </span>
                         </button>
                       </td>
-                      <td>{company.companyID}</td>
-                      <td>
-                        <code>{company.companycode}</code>
+                      <td data-label="شناسه شرکت">
+                        <bdi>{company.companyID}</bdi>
                       </td>
-                      <td className="company-address" title={company.address}>
-                        <span>{company.address}</span>
+                      <td data-label="کد شرکت">
+                        <code>
+                          <bdi>{company.companycode}</bdi>
+                        </code>
                       </td>
-                      <td>
-                        <span
-                          className={`stock-badge ${company.isActive ? "healthy" : "out"}`}
+                      <td
+                        className="company-address"
+                        title={company.address}
+                        data-label="نشانی"
+                      >
+                        <span dir="auto">{company.address}</span>
+                      </td>
+                      <td data-label="وضعیت">
+                        <Chip
+                          color={company.isActive ? "success" : "neutral"}
+                          variant="soft"
+                          size="sm"
                         >
-                          <span />
-                          {company.isActive ? "Active" : "Inactive"}
-                        </span>
+                          {company.isActive ? "فعال" : "غیرفعال"}
+                        </Chip>
                       </td>
-                      <td>
+                      <td data-label="عملیات">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
                               variant="ghost"
                               size="icon"
-                              aria-label={`Actions for ${company.name}`}
+                              aria-label={`عملیات ${company.name}`}
                             >
                               <Ellipsis />
                             </Button>
@@ -328,14 +345,32 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                             <DropdownMenuItem
                               onSelect={() => openEditor(company)}
                             >
-                              <Pencil /> Edit company
+                              <Pencil /> ویرایش شرکت
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                router.push(
+                                  `/dashboard/subcompanies?companyId=${company.id}`,
+                                )
+                              }
+                            >
+                              <Building2 /> مشاهده شرکت‌های تابعه
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() =>
+                                router.push(
+                                  `/dashboard/subcompanies?companyId=${company.id}&new=1`,
+                                )
+                              }
+                            >
+                              <Plus /> افزودن شرکت تابعه
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-destructive focus:bg-red-50"
                               onSelect={() => setDeleting(company)}
                             >
-                              <Trash2 /> Delete company
+                              <Trash2 /> حذف شرکت
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -343,19 +378,19 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                     </tr>
                   ))}
                 </tbody>
-              </table>
+              </Table>
               {!rows.length && (
                 <div className="empty-state">
                   <Building2 size={32} />
                   <h3>
                     {companies.length
-                      ? "No matching companies"
-                      : "Your company directory starts here"}
+                      ? "شرکتی مطابق جستجو پیدا نشد"
+                      : "فهرست شرکت‌های شما از اینجا آغاز می‌شود"}
                   </h3>
                   <p>
                     {companies.length
-                      ? "Try a different search or status filter."
-                      : "Add a company with its address, identifiers, and active status."}
+                      ? "جستجو یا فیلتر وضعیت را تغییر دهید."
+                      : "یک شرکت با نشانی، شناسه‌ها و وضعیت فعالیت اضافه کنید."}
                   </p>
                   <Button
                     variant="outline"
@@ -366,8 +401,8 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                     }
                   >
                     {companies.length
-                      ? "Clear filters"
-                      : "Add your first company"}
+                      ? "پاک کردن فیلترها"
+                      : "افزودن اولین شرکت"}
                   </Button>
                 </div>
               )}
@@ -377,7 +412,7 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                 {filtered.length
                   ? `${(currentPage - 1) * 10 + 1}–${Math.min(currentPage * 10, filtered.length)}`
                   : "0"}{" "}
-                of {filtered.length} companies
+                از {filtered.length} شرکت
               </span>
               <div>
                 <span>
@@ -386,7 +421,7 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Previous company page"
+                  aria-label="صفحه قبلی شرکت‌ها"
                   disabled={currentPage <= 1}
                   onClick={() => setPage(currentPage - 1)}
                 >
@@ -395,7 +430,7 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                 <Button
                   variant="outline"
                   size="icon"
-                  aria-label="Next company page"
+                  aria-label="صفحه بعدی شرکت‌ها"
                   disabled={currentPage >= pageCount}
                   onClick={() => setPage(currentPage + 1)}
                 >
@@ -409,8 +444,8 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
       <p className="data-source-note">
         <Building2 size={12} />
         {mode === "demo"
-          ? "Demo companies · Changes are saved locally on this server"
-          : "Live companies · Connected to your .NET 10 API and SQL Server"}
+          ? "شرکت‌های آزمایشی · تغییرات روی این سرور ذخیره می‌شوند"
+          : "شرکت‌ها · متصل به سرویس دات‌نت ۱۰ و پایگاه داده"}
       </p>
 
       <Dialog
@@ -425,16 +460,16 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
               <Building2 size={20} />
             </span>
             <DialogTitle>
-              {editor?.company ? "Edit company" : "Add company"}
+              {editor?.company ? "ویرایش شرکت" : "افزودن شرکت"}
             </DialogTitle>
             <DialogDescription>
-              Enter the company’s details. All text fields are required.
+              اطلاعات شرکت را وارد کنید. تکمیل همه فیلدهای متنی الزامی است.
             </DialogDescription>
           </DialogHeader>
           <form className="product-form" onSubmit={save}>
             {editor?.company && (
               <div className="space-y-2">
-                <Label htmlFor="company-record-id">Record ID</Label>
+                <Label htmlFor="company-record-id">شناسه رکورد</Label>
                 <Input
                   id="company-record-id"
                   value={editor.company.id}
@@ -445,14 +480,15 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             )}
             <div className="space-y-2">
               <Label htmlFor="company-name">
-                Company name <span className="required-mark">*</span>
+                نام شرکت <span className="required-mark">*</span>
               </Label>
               <Input
                 id="company-name"
+                dir="auto"
                 autoFocus
                 required
                 maxLength={200}
-                placeholder="e.g. Acme Industries"
+                placeholder="مثلاً شرکت نمونه"
                 value={fields.name}
                 onChange={(event) =>
                   setFields({ ...fields, name: event.target.value })
@@ -461,14 +497,15 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="company-address">
-                Address <span className="required-mark">*</span>
+                نشانی <span className="required-mark">*</span>
               </Label>
               <textarea
                 id="company-address"
+                dir="auto"
                 required
                 maxLength={500}
                 rows={3}
-                placeholder="Street, city, region, postal code"
+                placeholder="خیابان، شهر، استان، کد پستی"
                 value={fields.address}
                 onChange={(event) =>
                   setFields({ ...fields, address: event.target.value })
@@ -478,13 +515,14 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             <div className="form-two-columns">
               <div className="space-y-2">
                 <Label htmlFor="company-identifier">
-                  Company ID <span className="required-mark">*</span>
+                  شناسه شرکت <span className="required-mark">*</span>
                 </Label>
                 <Input
                   id="company-identifier"
+                  dir="auto"
                   required
                   maxLength={100}
-                  placeholder="e.g. CMP-001"
+                  placeholder="مثلاً CMP-001"
                   value={fields.companyID}
                   onChange={(event) =>
                     setFields({ ...fields, companyID: event.target.value })
@@ -493,13 +531,14 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="company-code">
-                  Company code <span className="required-mark">*</span>
+                  کد شرکت <span className="required-mark">*</span>
                 </Label>
                 <Input
                   id="company-code"
+                  dir="auto"
                   required
                   maxLength={50}
-                  placeholder="e.g. ACME"
+                  placeholder="مثلاً ACME"
                   value={fields.companycode}
                   onChange={(event) =>
                     setFields({ ...fields, companycode: event.target.value })
@@ -509,23 +548,24 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             </div>
             <div className="company-active-field">
               <div>
-                <Label htmlFor="company-active">Active company</Label>
-                <p>Inactive companies remain in your directory.</p>
+                <Label htmlFor="company-active">شرکت فعال</Label>
+                <p>شرکت‌های غیرفعال در فهرست شما باقی می‌مانند.</p>
               </div>
-              <input
-                id="company-active"
-                type="checkbox"
+              <Switch
+                slotProps={{
+                  input: {
+                    id: "company-active",
+                    "aria-label": "شرکت فعال",
+                  },
+                }}
+                color={fields.isActive ? "primary" : "neutral"}
                 checked={fields.isActive}
                 onChange={(event) =>
                   setFields({ ...fields, isActive: event.target.checked })
                 }
               />
             </div>
-            {formError && (
-              <p className="form-error" role="alert">
-                {formError}
-              </p>
-            )}
+            {formError && <FormAlert>{formError}</FormAlert>}
             <div className="dialog-form-footer">
               <Button
                 variant="outline"
@@ -533,11 +573,11 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                 disabled={saving}
                 onClick={() => setEditor(null)}
               >
-                Cancel
+                انصراف
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <LoaderCircle className="animate-spin" /> : <Check />}
-                {editor?.company ? "Save changes" : "Create company"}
+                {editor?.company ? "ذخیره تغییرات" : "ایجاد شرکت"}
               </Button>
             </div>
           </form>
@@ -554,11 +594,10 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
             <span className="dialog-icon destructive-icon">
               <Trash2 size={20} />
             </span>
-            <DialogTitle>Delete this company?</DialogTitle>
+            <DialogTitle>این شرکت حذف شود؟</DialogTitle>
             <DialogDescription>
-              “{deleting?.name}” will be removed. This action can’t be undone.
-              You can edit the company and mark it inactive to keep its record
-              instead.
+              “{deleting?.name}» حذف خواهد شد. این کار قابل بازگشت نیست. برای
+              نگهداری سوابق، می‌توانید به‌جای حذف، شرکت را غیرفعال کنید.
             </DialogDescription>
           </DialogHeader>
           <div className="dialog-form-footer">
@@ -567,15 +606,14 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
               disabled={saving}
               onClick={() => setDeleting(null)}
             >
-              Keep company
+              نگهداری شرکت
             </Button>
             <Button
               variant="destructive"
               disabled={saving}
               onClick={() => void remove()}
             >
-              {saving && <LoaderCircle className="animate-spin" />}Delete
-              company
+              {saving && <LoaderCircle className="animate-spin" />}حذف شرکت
             </Button>
           </div>
         </DialogContent>

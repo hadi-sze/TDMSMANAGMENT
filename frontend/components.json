@@ -16,5 +16,9 @@
     "ui": "@/components/ui",
     "lib": "@/lib",
     "hooks": "@/hooks"
+  },
+  "rtl": true,
+  "registries": {
+    "@loading-ui": "https://loading-ui.com/r/{name}.json"
   }
 }

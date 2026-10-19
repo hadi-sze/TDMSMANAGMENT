@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using TDMSMANAGMENT.BLL.Exceptions;
 
@@ -14,6 +16,14 @@ public sealed class ApiExceptionHandler(ILogger<ApiExceptionHandler> logger, IPr
             problem = new ValidationProblemDetails(validation.Errors)
             {
                 Status = StatusCodes.Status400BadRequest, Title = "One or more validation errors occurred."
+            };
+        }
+        else if (exception is SqlException { Number: 547 } || exception is DbUpdateException { InnerException: SqlException { Number: 547 } })
+        {
+            problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status409Conflict, Title = "A related record prevents this operation.",
+                Detail = "Check the parent company. Remove or reassign its subcompanies before deleting a company."
             };
         }
         else

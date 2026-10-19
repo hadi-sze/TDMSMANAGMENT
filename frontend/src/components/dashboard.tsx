@@ -44,8 +44,14 @@ import {
   UserRound,
 } from "lucide-react";
 import { toast } from "sonner";
+import Table from "@mui/joy/Table";
+import Chip from "@mui/joy/Chip";
+import { OrbitRing } from "@/components/orbit-ring";
+import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
 import { Brand } from "@/components/brand";
+import { SubCompaniesPanel } from "@/components/subcompanies-panel";
 import { CompaniesPanel } from "@/components/companies-panel";
+import { NavCollapse } from "@/components/ui/nav-collapse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -68,7 +74,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/products";
 
-type View = "home" | "products" | "companies" | "analytics" | "settings";
+type View =
+  "home" | "products" | "companies" | "subcompanies" | "analytics" | "settings";
 type ProductFields = {
   name: string;
   description: string;
@@ -91,11 +98,12 @@ const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const route = (view: View) =>
   view === "home" ? "/dashboard" : `/dashboard/${view}`;
 const titleFor: Record<View, string> = {
-  home: "Account home",
-  products: "Products",
-  companies: "Companies",
-  analytics: "Inventory analytics",
-  settings: "Account settings",
+  home: "صفحه اصلی",
+  products: "محصولات",
+  companies: "شرکت‌ها",
+  subcompanies: "شرکت‌های تابعه",
+  analytics: "تحلیل موجودی",
+  settings: "تنظیمات حساب کاربری",
 };
 
 async function errorMessage(response: Response) {
@@ -106,10 +114,10 @@ async function errorMessage(response: Response) {
       (body.errors && (Object.values(body.errors).flat()[0] as string)) ||
       body.detail ||
       body.title ||
-      "Something went wrong. Please try again."
+      "خطایی رخ داد. دوباره تلاش کنید."
     );
   } catch {
-    return "Something went wrong. Please try again.";
+    return "خطایی رخ داد. دوباره تلاش کنید.";
   }
 }
 
@@ -130,9 +138,10 @@ export function Dashboard({
   const [loadError, setLoadError] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [recents, setRecents] = useState(true);
   const [inventoryOpen, setInventoryOpen] = useState(false);
-  const [companiesOpen, setCompaniesOpen] = useState(view === "companies");
+  const [companiesOpen, setCompaniesOpen] = useState(
+    view === "companies" || view === "subcompanies",
+  );
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState("");
   const [help, setHelp] = useState<
@@ -181,7 +190,7 @@ export function Dashboard({
     setMobile(false);
   }, [pathname]);
   useEffect(() => {
-    if (view === "companies") setCompaniesOpen(true);
+    if (view === "companies" || view === "subcompanies") setCompaniesOpen(true);
   }, [view]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
@@ -234,14 +243,12 @@ export function Dashboard({
         return;
       }
       toast.success(
-        editor.product ? "Product updated" : "Product added to your workspace",
+        editor.product ? "محصول به‌روزرسانی شد" : "محصول به فضای کاری اضافه شد",
       );
       setEditor(null);
       await refresh();
     } catch {
-      setFormError(
-        "The product could not be saved. Check your connection and try again.",
-      );
+      setFormError("محصول ذخیره نشد. اتصال را بررسی و دوباره تلاش کنید.");
     } finally {
       setSaving(false);
     }
@@ -257,11 +264,11 @@ export function Dashboard({
         toast.error(await errorMessage(response));
         return;
       }
-      toast.success("Product deleted");
+      toast.success("محصول حذف شد");
       setDeleting(null);
       await refresh();
     } catch {
-      toast.error("The product could not be deleted. Please try again.");
+      toast.error("محصول حذف نشد. دوباره تلاش کنید.");
     } finally {
       setSaving(false);
     }
@@ -273,14 +280,14 @@ export function Dashboard({
       router.push("/login");
       router.refresh();
     } catch {
-      toast.error("Unable to sign out. Please try again.");
+      toast.error("خروج انجام نشد. دوباره تلاش کنید.");
     }
   }
   function exportProducts() {
     const escape = (value: unknown) =>
       `"${String(value ?? "").replaceAll('"', '""')}"`;
     const csv = [
-      ["ID", "Name", "Description", "Price", "Stock", "Created UTC"],
+      ["شناسه", "نام", "توضیحات", "قیمت", "موجودی", "زمان ایجاد (UTC)"],
       ...filtered.map((p) => [
         p.id,
         p.name,
@@ -300,7 +307,7 @@ export function Dashboard({
     link.download = "tdms-products.csv";
     link.click();
     URL.revokeObjectURL(url);
-    toast.success("Product export downloaded");
+    toast.success("خروجی محصولات دانلود شد");
   }
   const filtered = useMemo(
     () =>
@@ -354,30 +361,32 @@ export function Dashboard({
   const sidebarContents = (
     <>
       <div className="sidebar-head">
-        <Link href="/dashboard" aria-label="TDMSMANAGMENT home">
+        <Link href="/dashboard" aria-label="صفحه اصلی TDMSMANAGMENT">
           <Brand compact />
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="workspace-switch">
               <span>
-                <strong>TDMS workspace</strong>
+                <strong>فضای کاری TDMS</strong>
                 <small>TDMSMANAGMENT</small>
               </span>
               <ChevronsUpDown size={13} />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            <DropdownMenuLabel>Your workspace</DropdownMenuLabel>
-            <DropdownMenuLabel>{email}</DropdownMenuLabel>
+            <DropdownMenuLabel>فضای کاری شما</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              <bdi dir="ltr">{email}</bdi>
+            </DropdownMenuLabel>
             <DropdownMenuItem onSelect={() => router.push("/dashboard")}>
-              <Check /> TDMS workspace
+              <Check /> فضای کاری TDMS
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onSelect={() => router.push("/dashboard/settings")}
             >
-              <Settings2 /> Workspace settings
+              <Settings2 /> تنظیمات فضای کاری
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -385,53 +394,33 @@ export function Dashboard({
       <div className="sidebar-body">
         <button className="quick-search" onClick={() => setCommandOpen(true)}>
           <Search size={14} />
-          <span>Quick search...</span>
+          <span>جستجوی سریع…</span>
           <kbd>Ctrl K</kbd>
         </button>
-        <nav aria-label="Main navigation">
+        <nav aria-label="ناوبری اصلی">
           <Link
             href="/dashboard"
             className={cn("nav-item", view === "home" && "active")}
           >
             <Home />
-            <span>Account home</span>
+            <span>صفحه اصلی</span>
           </Link>
-          <button
-            className="nav-item"
-            onClick={() => setRecents(!recents)}
-            aria-expanded={recents}
-          >
-            <Clock3 />
-            <span>Recents</span>
-            <ChevronDown
-              className={cn("nav-chevron", !recents && "-rotate-90")}
-            />
-          </button>
-          {recents && (
-            <div className="recent-list">
-              <Link href="/dashboard/products">
-                Products<small>Your catalog</small>
-              </Link>
-              <Link href="/dashboard/analytics">
-                Inventory overview<small>Analytics</small>
-              </Link>
-              <Link href="/dashboard/settings">
-                Workspace settings<small>Manage account</small>
-              </Link>
-            </div>
-          )}
+
           <Link
             href="/dashboard/products"
             className={cn("nav-item", view === "products" && "active")}
           >
             <Package />
-            <span>Products</span>
+            <span>محصولات</span>
             <span className="nav-count">{loading ? "–" : products.length}</span>
           </Link>
           <button
-            className={cn("nav-item", view === "companies" && "active")}
-            aria-label="Companies menu"
-            aria-expanded={companiesOpen}
+            className={cn(
+              "nav-item",
+              (view === "companies" || view === "subcompanies") && "active",
+            )}
+            aria-label="منوی شرکت‌ها"
+            aria-expanded={companiesOpen && !collapsed}
             onClick={() => {
               if (collapsed) {
                 setCollapsed(false);
@@ -440,15 +429,15 @@ export function Dashboard({
             }}
           >
             <Building2 />
-            <span>Companies</span>
+            <span>شرکت‌ها</span>
             <ChevronRight
               className={cn("nav-chevron", companiesOpen && "rotate-90")}
             />
           </button>
-          {companiesOpen && (
+          <NavCollapse open={companiesOpen && !collapsed}>
             <ul
               className="recent-list company-navigation"
-              aria-label="Company navigation"
+              aria-label="ناوبری شرکت‌ها"
             >
               <li>
                 <Link
@@ -460,76 +449,79 @@ export function Dashboard({
                   }
                 >
                   <Building2 size={12} />
-                  All companies
+                  همه شرکت‌ها
                 </Link>
               </li>
+
               <li>
                 <Link
-                  href="/dashboard/companies?new=1"
-                  onClick={() => setMobile(false)}
+                  href="/dashboard/subcompanies"
+                  aria-current={view === "subcompanies" ? "page" : undefined}
                 >
-                  <Plus size={12} />
-                  Add company
+                  <Building2 size={13} />
+                  <span>شرکت‌های تابعه</span>
                 </Link>
               </li>
             </ul>
-          )}
+          </NavCollapse>
           <Link
             href="/dashboard/analytics"
             className={cn("nav-item", view === "analytics" && "active")}
           >
             <Activity />
-            <span>Overview & insights</span>
-            <span className="new-tag">New</span>
+            <span>نمای کلی و بینش‌ها</span>
+            <span className="new-tag">جدید</span>
             <ChevronRight className="nav-chevron" />
           </Link>
-          <div className="nav-label">Build</div>
+          <div className="nav-label">ایجاد و مدیریت</div>
           <button className="nav-item" onClick={() => openEditor()}>
             <Box />
-            <span>Create product</span>
+            <span>ایجاد محصول</span>
             <Plus className="nav-chevron" />
           </button>
           <button
             className="nav-item"
-            aria-expanded={inventoryOpen}
-            onClick={() => setInventoryOpen(!inventoryOpen)}
+            aria-expanded={inventoryOpen && !collapsed}
+            aria-label="موجودی"
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setInventoryOpen(true);
+              } else setInventoryOpen(!inventoryOpen);
+            }}
           >
             <Layers3 />
-            <span>Inventory</span>
+            <span>موجودی</span>
             <ChevronRight
               className={cn("nav-chevron", inventoryOpen && "rotate-90")}
             />
           </button>
-          {inventoryOpen && (
+          <NavCollapse open={inventoryOpen && !collapsed}>
             <div className="recent-list inventory-subnav">
-              <Link href="/dashboard/products">All products</Link>
-              <Link href="/dashboard/products?stock=low">Low stock</Link>
-              <Link href="/dashboard/products?stock=out">Out of stock</Link>
+              <Link href="/dashboard/products">همه محصولات</Link>
+              <Link href="/dashboard/products?stock=low">موجودی کم</Link>
+              <Link href="/dashboard/products?stock=out">ناموجود</Link>
             </div>
-          )}
-          <Link href="/dashboard/analytics" className="nav-item">
-            <BarChart3 />
-            <span>Reports & analytics</span>
-            <ChevronRight className="nav-chevron" />
-          </Link>
+          </NavCollapse>
+
           <button
             className="nav-item"
             onClick={exportProducts}
             disabled={loading || !!loadError}
           >
             <Database />
-            <span>Data & exports</span>
+            <span>داده‌ها و خروجی‌ها</span>
             <Download className="nav-chevron" />
           </button>
-          <div className="nav-label">Protect & connect</div>
+          <div className="nav-label">امنیت و اتصال</div>
           <Link href="/dashboard/settings" className="nav-item">
             <ShieldCheck />
-            <span>Access & security</span>
+            <span>دسترسی و امنیت</span>
             <ChevronRight className="nav-chevron" />
           </Link>
           <button className="nav-item" onClick={() => setHelp("guide")}>
             <BookOpen />
-            <span>Getting started</span>
+            <span>شروع کار</span>
             <ArrowUpRight className="nav-chevron" />
           </button>
           <div className="sidebar-account">
@@ -538,7 +530,7 @@ export function Dashboard({
               className={cn("nav-item", view === "settings" && "active")}
             >
               <Settings2 />
-              <span>Manage account</span>
+              <span>مدیریت حساب کاربری</span>
               <ChevronRight className="nav-chevron" />
             </Link>
           </div>
@@ -550,13 +542,13 @@ export function Dashboard({
             setCollapsed(!collapsed);
             setMobile(false);
           }}
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          aria-label={collapsed ? "باز کردن نوار کناری" : "جمع کردن نوار کناری"}
         >
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </button>
         <span>
           <span className="status-dot" />{" "}
-          {mode === "demo" ? "Demo workspace" : "Connected to .NET"}
+          {mode === "demo" ? "فضای کاری آزمایشی" : "متصل به دات‌نت"}
         </span>
       </div>
     </>
@@ -565,15 +557,15 @@ export function Dashboard({
   return (
     <div className={cn("app-shell", collapsed && "sidebar-collapsed")}>
       <a className="skip-link" href="#main-content">
-        Skip to content
+        رفتن به محتوای اصلی
       </a>
       <aside className="sidebar desktop-sidebar">{sidebarContents}</aside>
       <Dialog open={mobile} onOpenChange={setMobile}>
         <DialogContent className="mobile-nav-dialog">
           <DialogHeader className="sr-only">
-            <DialogTitle>Workspace navigation</DialogTitle>
+            <DialogTitle>ناوبری فضای کاری</DialogTitle>
             <DialogDescription>
-              Navigate your TDMSMANAGMENT workspace.
+              بخش موردنظر را در فضای کاری TDMSMANAGMENT انتخاب کنید.
             </DialogDescription>
           </DialogHeader>
           <aside className="sidebar mobile-sidebar">{sidebarContents}</aside>
@@ -586,13 +578,16 @@ export function Dashboard({
               variant="ghost"
               size="icon"
               className="mobile-menu"
-              aria-label="Open navigation"
-              onClick={() => setMobile(true)}
+              aria-label="باز کردن منو"
+              onClick={() => {
+                setCollapsed(false);
+                setMobile(true);
+              }}
             >
               <Menu />
             </Button>
             <span className="breadcrumb">
-              Workspace <ChevronRight size={12} />
+              فضای کاری <ChevronRight size={12} />
               <span>{titleFor[view]}</span>
             </span>
           </div>
@@ -603,38 +598,39 @@ export function Dashboard({
               }}
             >
               <Sparkles size={14} />
-              <span>Quick guide</span>
+              <span>راهنمای سریع</span>
             </button>
             <button onClick={() => setHelp("support")}>
               <CircleHelp size={14} />
-              <span>Support</span>
+              <span>پشتیبانی</span>
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="user-menu" aria-label="Open user menu">
+                <button className="user-menu" aria-label="باز کردن منوی کاربر">
                   <UserRound size={17} />
                   <span className="user-status" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Signed in as</DropdownMenuLabel>
+                <DropdownMenuLabel>وارد شده با حساب</DropdownMenuLabel>
                 <DropdownMenuLabel className="text-foreground">
-                  {email}
+                  <bdi dir="ltr">{email}</bdi>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={() => router.push("/dashboard/settings")}
                 >
-                  <Settings2 /> Account settings
+                  <Settings2 /> تنظیمات حساب کاربری
                 </DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => void logout()}>
-                  <LogOut /> Sign out
+                  <LogOut /> خروج از حساب
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
         <main
+          key={view}
           id="main-content"
           className={cn("page-content", view === "home" && "home-content")}
         >
@@ -647,12 +643,12 @@ export function Dashboard({
                 <span className="intro-spark">
                   <Sparkles size={13} />
                 </span>
-                A clearer view of your workspace
+                نمایی روشن‌تر از فضای کاری شما
                 <ArrowUpRight size={13} />
               </button>
-              <h1>Pick up where you left off.</h1>
+              <h1>از همان‌جا که بودید ادامه دهید.</h1>
               <p className="home-subtitle">
-                A place for everything. More room for what’s next.
+                همه چیز در جای خود؛ آماده برای قدم بعدی.
               </p>
               <button
                 className="hero-search"
@@ -662,7 +658,7 @@ export function Dashboard({
                 }}
               >
                 <Search size={19} />
-                <span>Search your workspace...</span>
+                <span>جستجو در فضای کاری…</span>
                 <span className="shortcut">
                   <kbd>Ctrl</kbd>
                   <kbd>K</kbd>
@@ -682,20 +678,20 @@ export function Dashboard({
                     </div>
                     <MousePointer2 className="folder-cursor" />
                     <span className="illustration-caption">
-                      A small step. A new possibility.
+                      قدمی کوچک، فرصتی تازه.
                     </span>
                     <div className="art-plus art-plus-one">+</div>
                     <div className="art-plus art-plus-two">+</div>
                   </div>
                   <div className="launch-card-body">
-                    <span className="card-kicker">START SOMETHING</span>
-                    <h2>Create something new</h2>
+                    <span className="card-kicker">شروعی تازه</span>
+                    <h2>چیز تازه‌ای بسازید</h2>
                     <p>
-                      Bring a new product into your workspace. Add the details
-                      and let the good work begin.
+                      محصول تازه‌ای به فضای کاری اضافه کنید. اطلاعات آن را وارد
+                      کنید و کار را آغاز کنید.
                     </p>
                     <Button variant="outline" onClick={() => openEditor()}>
-                      <Plus /> Add a product
+                      <Plus /> افزودن محصول
                     </Button>
                   </div>
                 </article>
@@ -730,17 +726,17 @@ export function Dashboard({
                     <div className="records-orbit" />
                   </div>
                   <div className="launch-card-body">
-                    <span className="card-kicker">KEEP IT ORGANIZED</span>
-                    <h2>Everything, in one place</h2>
+                    <span className="card-kicker">همه چیز منظم</span>
+                    <h2>همه چیز در یک جا</h2>
                     <p>
-                      Find your products, keep an eye on stock, and turn a busy
-                      catalog into a clear picture.
+                      محصولات را پیدا کنید، موجودی را زیر نظر بگیرید و فهرستی
+                      روشن و منظم داشته باشید.
                     </p>
                     <Button
                       variant="outline"
                       onClick={() => router.push("/dashboard/products")}
                     >
-                      View products <ArrowRight />
+                      مشاهده محصولات <ArrowRight />
                     </Button>
                   </div>
                 </article>
@@ -768,17 +764,17 @@ export function Dashboard({
                     <span className="security-star star-two">✦</span>
                   </div>
                   <div className="launch-card-body">
-                    <span className="card-kicker">MAKE IT YOURS</span>
-                    <h2>Your workspace, protected</h2>
+                    <span className="card-kicker">متناسب با نیاز شما</span>
+                    <h2>فضای کاری امن شما</h2>
                     <p>
-                      Your account and connection details, together. A little
-                      peace of mind for your everyday work.
+                      اطلاعات حساب و اتصال را در یک جا مدیریت کنید و با آسودگی
+                      کار کنید.
                     </p>
                     <Button
                       variant="outline"
                       onClick={() => router.push("/dashboard/settings")}
                     >
-                      Account settings <ArrowRight />
+                      تنظیمات حساب کاربری <ArrowRight />
                     </Button>
                   </div>
                 </article>
@@ -787,53 +783,54 @@ export function Dashboard({
                 <span className="status-dot" />
                 <span>
                   {mode === "demo"
-                    ? "You’re exploring a demo workspace. Make yourself at home."
-                    : "Connected to your TDMSMANAGMENT API. You’re ready to go."}
+                    ? "در حال مشاهده فضای کاری آزمایشی هستید. با امکانات آن آشنا شوید."
+                    : "اتصال به سرویس TDMSMANAGMENT برقرار است. آماده شروع هستید."}
                 </span>
                 <button onClick={() => setHelp("guide")}>
-                  Get oriented <ArrowUpRight size={12} />
+                  آشنایی با محیط <ArrowUpRight size={12} />
                 </button>
               </div>
             </section>
           )}
 
           {view === "companies" && <CompaniesPanel mode={mode} />}
+          {view === "subcompanies" && <SubCompaniesPanel mode={mode} />}
           {view === "products" && (
             <section className="workspace-page">
               <div className="page-heading">
                 <div>
-                  <span className="section-eyebrow">YOUR WORKSPACE</span>
-                  <h1>Products</h1>
-                  <p>A little order for everything you offer.</p>
+                  <span className="section-eyebrow">فضای کاری شما</span>
+                  <h1>محصولات</h1>
+                  <p>نظمی تازه برای محصولات شما.</p>
                 </div>
                 <Button onClick={() => openEditor()}>
-                  <Plus /> Add product
+                  <Plus /> افزودن محصول
                 </Button>
               </div>
               <div className="stats-grid">
                 <Stat
-                  label="Total products"
+                  label="تعداد محصولات"
                   value={loading ? "—" : number(products.length)}
                   icon={<Package />}
-                  note="In your catalog"
+                  note="در فهرست محصولات شما"
                 />
                 <Stat
-                  label="Units in stock"
+                  label="تعداد موجودی"
                   value={loading ? "—" : number(units)}
                   icon={<Layers3 />}
-                  note="Ready for what’s next"
+                  note="آماده برای قدم بعدی"
                 />
                 <Stat
-                  label="Inventory value"
+                  label="ارزش موجودی"
                   value={loading ? "—" : money(value)}
                   icon={<BarChart3 />}
-                  note="At current product prices"
+                  note="بر اساس قیمت فعلی محصولات"
                 />
                 <Stat
-                  label="Needs attention"
+                  label="نیازمند بررسی"
                   value={loading ? "—" : number(low + out)}
                   icon={<Bell />}
-                  note={`${low} low stock · ${out} out of stock`}
+                  note={`${low} محصول با موجودی کم · ${out} محصول ناموجود`}
                   warning={low + out > 0}
                 />
               </div>
@@ -842,8 +839,8 @@ export function Dashboard({
                   <div className="catalog-search">
                     <Search size={16} />
                     <Input
-                      aria-label="Search products"
-                      placeholder="Search products..."
+                      aria-label="جستجوی محصولات"
+                      placeholder="جستجوی محصولات…"
                       value={query}
                       onChange={(e) => {
                         setQuery(e.target.value);
@@ -852,26 +849,27 @@ export function Dashboard({
                     />
                   </div>
                   <div className="catalog-toolbar-right">
-                    <select
-                      aria-label="Filter by stock"
+                    <FilterSelect
+                      label="فیلتر موجودی"
                       value={stock}
-                      onChange={(e) => {
-                        setStock(e.target.value);
+                      onValueChange={(value) => {
+                        setStock(value);
                         setPage(1);
                       }}
-                    >
-                      <option value="all">All stock levels</option>
-                      <option value="in">In stock</option>
-                      <option value="low">Low stock</option>
-                      <option value="out">Out of stock</option>
-                    </select>
+                      options={[
+                        { value: "all", label: "همه وضعیت‌های موجودی" },
+                        { value: "in", label: "موجود" },
+                        { value: "low", label: "موجودی کم" },
+                        { value: "out", label: "ناموجود" },
+                      ]}
+                    />
                     <Button
                       variant="outline"
-                      aria-label="Export products"
+                      aria-label="خروجی محصولات"
                       onClick={exportProducts}
                       disabled={loading || !!loadError}
                     >
-                      <Download /> <span className="export-text">Export</span>
+                      <Download /> <span className="export-text">خروجی</span>
                     </Button>
                   </div>
                 </div>
@@ -882,7 +880,7 @@ export function Dashboard({
                 ) : (
                   <>
                     <div className="table-scroll">
-                      <table className="product-table">
+                      <Table hoverRow size="sm" className="product-table">
                         <thead>
                           <tr>
                             <th>
@@ -897,10 +895,10 @@ export function Dashboard({
                                   })
                                 }
                               >
-                                Product <ChevronsUpDown size={12} />
+                                محصول <ChevronsUpDown size={12} />
                               </button>
                             </th>
-                            <th>Status</th>
+                            <th>وضعیت</th>
                             <th>
                               <button
                                 onClick={() =>
@@ -913,7 +911,7 @@ export function Dashboard({
                                   })
                                 }
                               >
-                                Price <ChevronsUpDown size={12} />
+                                قیمت <ChevronsUpDown size={12} />
                               </button>
                             </th>
                             <th>
@@ -928,19 +926,19 @@ export function Dashboard({
                                   })
                                 }
                               >
-                                Stock <ChevronsUpDown size={12} />
+                                موجودی <ChevronsUpDown size={12} />
                               </button>
                             </th>
-                            <th>Added</th>
+                            <th>تاریخ افزودن</th>
                             <th>
-                              <span className="sr-only">Actions</span>
+                              <span className="sr-only">عملیات</span>
                             </th>
                           </tr>
                         </thead>
                         <tbody>
                           {paged.map((product) => (
                             <tr key={product.id}>
-                              <td>
+                              <td data-label="نام محصول">
                                 <button
                                   className="product-name"
                                   onClick={() => setDetail(product)}
@@ -949,24 +947,24 @@ export function Dashboard({
                                     <Package size={19} />
                                   </span>
                                   <span>
-                                    <strong>{product.name}</strong>
+                                    <strong dir="auto">{product.name}</strong>
                                     <small>
                                       PRD-{String(product.id).padStart(4, "0")}
                                     </small>
                                   </span>
                                 </button>
                               </td>
-                              <td>
+                              <td data-label="وضعیت">
                                 <StockBadge quantity={product.stockQuantity} />
                               </td>
-                              <td className="tabular-nums">
-                                {money(product.price)}
+                              <td className="tabular-nums" data-label="قیمت">
+                                <bdi dir="ltr">{money(product.price)}</bdi>
                               </td>
-                              <td className="tabular-nums">
+                              <td className="tabular-nums" data-label="موجودی">
                                 {number(product.stockQuantity)}{" "}
-                                <span className="muted">units</span>
+                                <span className="muted">واحد</span>
                               </td>
-                              <td className="muted">
+                              <td className="muted" data-label="تاریخ افزودن">
                                 {new Date(
                                   product.createdAtUtc,
                                 ).toLocaleDateString("en-US", {
@@ -974,13 +972,13 @@ export function Dashboard({
                                   day: "numeric",
                                 })}
                               </td>
-                              <td>
+                              <td data-label="عملیات">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button
                                       variant="ghost"
                                       size="icon"
-                                      aria-label={`Actions for ${product.name}`}
+                                      aria-label={`عملیات ${product.name}`}
                                     >
                                       <Ellipsis />
                                     </Button>
@@ -989,19 +987,19 @@ export function Dashboard({
                                     <DropdownMenuItem
                                       onSelect={() => setDetail(product)}
                                     >
-                                      <Eye /> View details
+                                      <Eye /> مشاهده جزئیات
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onSelect={() => openEditor(product)}
                                     >
-                                      <Pencil /> Edit product
+                                      <Pencil /> ویرایش محصول
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
                                       className="text-destructive focus:bg-red-50"
                                       onSelect={() => setDeleting(product)}
                                     >
-                                      <Trash2 /> Delete product
+                                      <Trash2 /> حذف محصول
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -1009,19 +1007,19 @@ export function Dashboard({
                             </tr>
                           ))}
                         </tbody>
-                      </table>
+                      </Table>
                       {!paged.length && (
                         <div className="empty-state">
                           <Package size={30} />
                           <h3>
                             {products.length
-                              ? "No products found"
-                              : "A fresh start for your catalog"}
+                              ? "محصولی پیدا نشد"
+                              : "شروعی تازه برای فهرست محصولات شما"}
                           </h3>
                           <p>
                             {products.length
-                              ? "Try another search or stock filter."
-                              : "Add your first product and make this space yours."}
+                              ? "جستجو یا فیلتر موجودی را تغییر دهید."
+                              : "اولین محصول را اضافه کنید و فضای کاری را بسازید."}
                           </p>
                           <Button
                             variant="outline"
@@ -1032,8 +1030,8 @@ export function Dashboard({
                             }
                           >
                             {products.length
-                              ? "Clear filters"
-                              : "Add your first product"}
+                              ? "پاک کردن فیلترها"
+                              : "افزودن اولین محصول"}
                           </Button>
                         </div>
                       )}
@@ -1043,13 +1041,13 @@ export function Dashboard({
                         {filtered.length
                           ? `${(currentPage - 1) * pageSize + 1}–${Math.min(currentPage * pageSize, filtered.length)}`
                           : "0"}{" "}
-                        of {filtered.length} products
+                        از {filtered.length} محصول
                       </span>
                       <div>
                         <label>
-                          Rows per page{" "}
+                          تعداد ردیف در صفحه{" "}
                           <select
-                            aria-label="Rows per page"
+                            aria-label="تعداد ردیف در صفحه"
                             value={pageSize}
                             onChange={(e) => {
                               setPageSize(Number(e.target.value));
@@ -1067,7 +1065,7 @@ export function Dashboard({
                         <Button
                           variant="outline"
                           size="icon"
-                          aria-label="Previous page"
+                          aria-label="صفحه قبلی"
                           disabled={currentPage === 1}
                           onClick={() => setPage(currentPage - 1)}
                         >
@@ -1076,7 +1074,7 @@ export function Dashboard({
                         <Button
                           variant="outline"
                           size="icon"
-                          aria-label="Next page"
+                          aria-label="صفحه بعدی"
                           disabled={currentPage === pageCount}
                           onClick={() => setPage(currentPage + 1)}
                         >
@@ -1090,8 +1088,8 @@ export function Dashboard({
               <p className="data-source-note">
                 <Database size={12} />{" "}
                 {mode === "demo"
-                  ? "Demo data · Changes are saved locally on this server"
-                  : "Live data · Connected to your .NET 10 API"}
+                  ? "داده‌های آزمایشی · تغییرات روی این سرور ذخیره می‌شوند"
+                  : "داده‌های زنده · متصل به سرویس دات‌نت ۱۰"}
               </p>
             </section>
           )}
@@ -1100,16 +1098,16 @@ export function Dashboard({
             <section className="workspace-page">
               <div className="page-heading">
                 <div>
-                  <span className="section-eyebrow">THE BIG PICTURE</span>
-                  <h1>Inventory analytics</h1>
-                  <p>A clearer perspective on your products.</p>
+                  <span className="section-eyebrow">نمای کلی</span>
+                  <h1>تحلیل موجودی</h1>
+                  <p>نگاهی روشن‌تر به محصولات شما.</p>
                 </div>
                 <Button
                   variant="outline"
                   onClick={exportProducts}
                   disabled={loading || !!loadError}
                 >
-                  <Download /> Export products
+                  <Download /> خروجی محصولات
                 </Button>
               </div>
               {loadError ? (
@@ -1120,38 +1118,38 @@ export function Dashboard({
                 <>
                   <div className="stats-grid">
                     <Stat
-                      label="Catalog size"
+                      label="تعداد محصولات"
                       value={number(products.length)}
                       icon={<Package />}
-                      note="Products, all together"
+                      note="همه محصولات در یک جا"
                     />
                     <Stat
-                      label="Available inventory"
+                      label="موجودی قابل استفاده"
                       value={number(units)}
                       icon={<Layers3 />}
-                      note="Total units on hand"
+                      note="تعداد کل واحدهای موجود"
                     />
                     <Stat
-                      label="Inventory value"
+                      label="ارزش موجودی"
                       value={money(value)}
                       icon={<BarChart3 />}
-                      note="Price × quantity on hand"
+                      note="قیمت × تعداد موجودی"
                     />
                     <Stat
-                      label="Stock availability"
+                      label="درصد محصولات موجود"
                       value={`${products.length ? Math.round(((products.length - out) / products.length) * 100) : 0}%`}
                       icon={<Activity />}
-                      note="Products with available stock"
+                      note="محصولات دارای موجودی"
                     />
                   </div>
                   <div className="analytics-grid">
                     <div className="report-panel">
                       <div className="report-heading">
                         <div>
-                          <h2>Inventory at a glance</h2>
-                          <p>Value by product, highest first.</p>
+                          <h2>موجودی در یک نگاه</h2>
+                          <p>ارزش محصولات، از بیشترین به کمترین.</p>
                         </div>
-                        <span className="subtle-pill">USD</span>
+                        <span className="subtle-pill">دلار آمریکا</span>
                       </div>
                       {sortedValues.length ? (
                         <div className="bar-chart">
@@ -1175,19 +1173,19 @@ export function Dashboard({
                         </div>
                       ) : (
                         <p className="report-empty">
-                          Add a product to see your inventory breakdown.
+                          برای مشاهده جزئیات موجودی، یک محصول اضافه کنید.
                         </p>
                       )}
                       <div className="report-foot">
-                        <span className="status-dot" /> Based on your current
-                        catalog
+                        <span className="status-dot" /> بر اساس فهرست فعلی
+                        محصولات
                       </div>
                     </div>
                     <div className="report-panel">
                       <div className="report-heading">
                         <div>
-                          <h2>A healthy balance</h2>
-                          <p>Know where a little attention helps.</p>
+                          <h2>توازن موجودی</h2>
+                          <p>بخش‌های نیازمند بررسی را بشناسید.</p>
                         </div>
                         <ShieldCheck size={19} />
                       </div>
@@ -1201,22 +1199,22 @@ export function Dashboard({
                       >
                         <div>
                           <strong>{number(products.length)}</strong>
-                          <span>products</span>
+                          <span>محصول</span>
                         </div>
                       </div>
                       <div className="stock-legend">
                         <Link href="/dashboard/products?stock=in">
-                          <span className="legend-dot healthy" /> In stock
+                          <span className="legend-dot healthy" /> موجود
                           <strong>{products.length - low - out}</strong>
                           <ChevronRight size={13} />
                         </Link>
                         <Link href="/dashboard/products?stock=low">
-                          <span className="legend-dot low" /> Low stock
+                          <span className="legend-dot low" /> موجودی کم
                           <strong>{low}</strong>
                           <ChevronRight size={13} />
                         </Link>
                         <Link href="/dashboard/products?stock=out">
-                          <span className="legend-dot out" /> Out of stock
+                          <span className="legend-dot out" /> ناموجود
                           <strong>{out}</strong>
                           <ChevronRight size={13} />
                         </Link>
@@ -1230,20 +1228,20 @@ export function Dashboard({
                     <div>
                       <h3>
                         {low + out
-                          ? "A little attention goes a long way."
-                          : "Looking good. Keep it going."}
+                          ? "کمی توجه، تأثیری بزرگ دارد."
+                          : "همه چیز مرتب است. ادامه دهید."}
                       </h3>
                       <p>
                         {low + out
-                          ? `${low + out} product${low + out === 1 ? " needs" : "s need"} a stock check. Open your catalog to bring everything up to date.`
-                          : "Your inventory is ready. Add your next product whenever inspiration strikes."}
+                          ? `${low + out} محصول نیازمند بررسی موجودی است. فهرست محصولات را باز کنید و موجودی را به‌روز کنید.`
+                          : "موجودی شما آماده است. هر زمان خواستید محصول بعدی را اضافه کنید."}
                       </p>
                     </div>
                     <Button
                       variant="outline"
                       onClick={() => router.push("/dashboard/products")}
                     >
-                      Open catalog <ArrowRight />
+                      باز کردن فهرست محصولات <ArrowRight />
                     </Button>
                   </div>
                 </>
@@ -1255,17 +1253,15 @@ export function Dashboard({
             <section className="workspace-page settings-page">
               <div className="page-heading">
                 <div>
-                  <span className="section-eyebrow">MAKE YOURSELF AT HOME</span>
-                  <h1>Account settings</h1>
-                  <p>Your workspace, and the details that keep it running.</p>
+                  <span className="section-eyebrow">فضای کاری خودتان</span>
+                  <h1>تنظیمات حساب کاربری</h1>
+                  <p>فضای کاری و اطلاعات لازم برای مدیریت آن.</p>
                 </div>
               </div>
               <Tabs defaultValue="account">
                 <TabsList>
-                  <TabsTrigger value="account">Account</TabsTrigger>
-                  <TabsTrigger value="security">
-                    Security & connection
-                  </TabsTrigger>
+                  <TabsTrigger value="account">حساب کاربری</TabsTrigger>
+                  <TabsTrigger value="security">امنیت و اتصال</TabsTrigger>
                 </TabsList>
                 <TabsContent value="account">
                   <div className="settings-panel">
@@ -1274,44 +1270,45 @@ export function Dashboard({
                         <UserRound />
                       </span>
                       <div>
-                        <h2>Workspace administrator</h2>
-                        <p>{email}</p>
+                        <h2>مدیر فضای کاری</h2>
+                        <p>
+                          <bdi dir="ltr">{email}</bdi>
+                        </p>
                       </div>
-                      <span className="subtle-pill">Administrator</span>
+                      <span className="subtle-pill">مدیر</span>
                     </div>
                     <dl className="settings-details">
                       <div>
-                        <dt>Workspace name</dt>
-                        <dd>TDMS workspace</dd>
+                        <dt>نام فضای کاری</dt>
+                        <dd>فضای کاری TDMS</dd>
                       </div>
                       <div>
-                        <dt>Application</dt>
+                        <dt>برنامه</dt>
                         <dd>TDMSMANAGMENT</dd>
                       </div>
                       <div>
-                        <dt>Account email</dt>
-                        <dd>{email}</dd>
+                        <dt>ایمیل حساب کاربری</dt>
+                        <dd>
+                          <bdi dir="ltr">{email}</bdi>
+                        </dd>
                       </div>
                       <div>
-                        <dt>Workspace mode</dt>
+                        <dt>حالت فضای کاری</dt>
                         <dd>
                           <span className="status-dot" />
                           {mode === "demo"
-                            ? "Local demo workspace"
-                            : "Connected API workspace"}
+                            ? "فضای کاری آزمایشی محلی"
+                            : "فضای کاری متصل به سرویس"}
                         </dd>
                       </div>
                     </dl>
                     <div className="settings-panel-footer">
-                      <p>
-                        Account credentials are managed by your server
-                        administrator.
-                      </p>
+                      <p>اطلاعات ورود توسط مدیر سرور مدیریت می‌شود.</p>
                       <Button
                         variant="outline"
                         onClick={() => setHelp("support")}
                       >
-                        Get help <ArrowUpRight />
+                        دریافت راهنما <ArrowUpRight />
                       </Button>
                     </div>
                   </div>
@@ -1323,36 +1320,39 @@ export function Dashboard({
                         <ShieldCheck />
                       </span>
                       <div>
-                        <h2>Access & connection</h2>
-                        <p>The essentials, in one place.</p>
+                        <h2>دسترسی و اتصال</h2>
+                        <p>اطلاعات ضروری در یک جا.</p>
                       </div>
                     </div>
                     <dl className="settings-details">
                       <div>
-                        <dt>Session</dt>
+                        <dt>نشست کاربری</dt>
                         <dd>
-                          <span className="status-dot" /> Signed in · expires
-                          after 8 hours
+                          <span className="status-dot" /> وارد شده · اعتبار
+                          نشست: ۸ ساعت
                         </dd>
                       </div>
                       <div>
-                        <dt>Session protection</dt>
-                        <dd>Signed, HTTP-only session cookie</dd>
+                        <dt>امنیت نشست</dt>
+                        <dd>کوکی نشست امضاشده با دسترسی محدود به سرور</dd>
                       </div>
                       <div>
-                        <dt>Data source</dt>
+                        <dt>منبع داده</dt>
                         <dd>
                           {mode === "demo"
-                            ? "Local demo data store"
-                            : "ASP.NET Core REST API"}
+                            ? "ذخیره‌سازی محلی داده‌های آزمایشی"
+                            : "سرویس دات‌نت"}
                         </dd>
                       </div>
                       <div>
-                        <dt>API access</dt>
-                        <dd>Server-side proxy · no browser API credentials</dd>
+                        <dt>دسترسی به سرویس</dt>
+                        <dd>
+                          اتصال از طریق سرور · بدون نگهداری اطلاعات دسترسی در
+                          مرورگر
+                        </dd>
                       </div>
                       <div>
-                        <dt>Configure connection</dt>
+                        <dt>تنظیم اتصال</dt>
                         <dd>
                           <code>TDMS_DATA_SOURCE / TDMS_API_BASE_URL</code>
                         </dd>
@@ -1360,14 +1360,13 @@ export function Dashboard({
                     </dl>
                     <div className="settings-panel-footer">
                       <p>
-                        Server settings are configured in the frontend’s
-                        environment file.
+                        تنظیمات سرور در فایل محیطی رابط کاربری مشخص می‌شوند.
                       </p>
                       <Button
                         variant="outline"
                         onClick={() => setHelp("guide")}
                       >
-                        Connection guide <ArrowUpRight />
+                        راهنمای اتصال <ArrowUpRight />
                       </Button>
                     </div>
                   </div>
@@ -1375,11 +1374,11 @@ export function Dashboard({
               </Tabs>
               <div className="signout-panel">
                 <div>
-                  <h3>All done for now?</h3>
-                  <p>Sign out to end this session on your device.</p>
+                  <h3>فعلاً کارتان تمام شده؟</h3>
+                  <p>برای پایان دادن به نشست در این دستگاه، خارج شوید.</p>
                 </div>
                 <Button variant="outline" onClick={() => void logout()}>
-                  <LogOut /> Sign out
+                  <LogOut /> خروج از حساب
                 </Button>
               </div>
             </section>
@@ -1387,13 +1386,13 @@ export function Dashboard({
         </main>
         <footer className="app-footer">
           <div>
-            <button onClick={() => setHelp("support")}>Support</button>
+            <button onClick={() => setHelp("support")}>پشتیبانی</button>
             <span />
-            <button onClick={() => setHelp("status")}>System status</button>
+            <button onClick={() => setHelp("status")}>وضعیت سامانه</button>
             <span />
-            <button onClick={() => setHelp("guide")}>Documentation</button>
+            <button onClick={() => setHelp("guide")}>مستندات</button>
             <span />
-            <button onClick={() => setHelp("privacy")}>Privacy</button>
+            <button onClick={() => setHelp("privacy")}>حریم خصوصی</button>
           </div>
           <p>© {new Date().getFullYear()} TDMSMANAGMENT</p>
         </footer>
@@ -1402,17 +1401,18 @@ export function Dashboard({
       <Dialog open={commandOpen} onOpenChange={setCommandOpen}>
         <DialogContent className="command-dialog">
           <DialogHeader className="sr-only">
-            <DialogTitle>Search your workspace</DialogTitle>
+            <DialogTitle>جستجو در فضای کاری</DialogTitle>
             <DialogDescription>
-              Find a page or product. Use Tab and Enter to choose a result.
+              صفحه یا محصول موردنظر را پیدا کنید. برای انتخاب از کلیدهای Tab و
+              Enter استفاده کنید.
             </DialogDescription>
           </DialogHeader>
           <div className="command-search">
             <Search size={18} />
             <Input
               autoFocus
-              aria-label="Search workspace"
-              placeholder="Where would you like to go?"
+              aria-label="جستجوی فضای کاری"
+              placeholder="کدام بخش را جستجو می‌کنید؟"
               value={commandQuery}
               onChange={(e) => setCommandQuery(e.target.value)}
             />
@@ -1420,7 +1420,7 @@ export function Dashboard({
           <div className="command-results">
             {searchViews.length > 0 && (
               <>
-                <span className="command-section">WORKSPACE</span>
+                <span className="command-section">فضای کاری</span>
                 {searchViews.map((key) => (
                   <button
                     key={key}
@@ -1434,7 +1434,7 @@ export function Dashboard({
                         <Home size={16} />
                       ) : key === "products" ? (
                         <Package size={16} />
-                      ) : key === "companies" ? (
+                      ) : key === "companies" || key === "subcompanies" ? (
                         <Building2 size={16} />
                       ) : key === "analytics" ? (
                         <BarChart3 size={16} />
@@ -1450,7 +1450,7 @@ export function Dashboard({
             )}
             {searchProducts.length > 0 && (
               <>
-                <span className="command-section">PRODUCTS</span>
+                <span className="command-section">محصولات</span>
                 {searchProducts.map((p) => (
                   <button
                     key={p.id}
@@ -1463,26 +1463,28 @@ export function Dashboard({
                       <Package size={16} />
                     </span>
                     {p.name}
-                    <small>{money(p.price)}</small>
+                    <small>
+                      <bdi dir="ltr">{money(p.price)}</bdi>
+                    </small>
                   </button>
                 ))}
               </>
             )}
             {!searchViews.length && !searchProducts.length && (
               <p className="command-empty">
-                No results. Try a product name or “analytics”.
+                نتیجه‌ای پیدا نشد. نام محصول یا «تحلیل» را جستجو کنید.
               </p>
             )}
           </div>
           <div className="command-footer">
             <span>
-              <kbd>Tab</kbd> to navigate
+              <kbd>Tab</kbd> برای جابه‌جایی
             </span>
             <span>
-              <kbd>↵</kbd> to open
+              <kbd>↵</kbd> برای باز کردن
             </span>
             <span>
-              <kbd>esc</kbd> to close
+              <kbd>esc</kbd> برای بستن
             </span>
           </div>
         </DialogContent>
@@ -1500,50 +1502,50 @@ export function Dashboard({
               <Package size={20} />
             </span>
             <DialogTitle>
-              {editor?.product
-                ? "Edit product"
-                : "A new addition to your workspace"}
+              {editor?.product ? "ویرایش محصول" : "افزودن محصول تازه"}
             </DialogTitle>
             <DialogDescription>
               {editor?.product
-                ? "Update the details below. A little upkeep goes a long way."
-                : "Start with the essentials. You can always make changes later."}
+                ? "اطلاعات زیر را به‌روزرسانی کنید."
+                : "اطلاعات اصلی را وارد کنید. بعداً می‌توانید آن‌ها را تغییر دهید."}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={saveProduct} className="product-form">
             <div className="space-y-2">
               <Label htmlFor="product-name">
-                Product name <span className="required-mark">*</span>
+                نام محصول <span className="required-mark">*</span>
               </Label>
               <Input
                 id="product-name"
+                dir="auto"
                 autoFocus
                 value={fields.name}
                 onChange={(e) => setFields({ ...fields, name: e.target.value })}
                 required
                 maxLength={200}
-                placeholder="e.g. Wireless keyboard"
+                placeholder="مثلاً صفحه‌کلید بی‌سیم"
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="product-description">
-                Description <span className="optional-label">(optional)</span>
+                توضیحات <span className="optional-label">(اختیاری)</span>
               </Label>
               <textarea
                 id="product-description"
+                dir="auto"
                 value={fields.description}
                 onChange={(e) =>
                   setFields({ ...fields, description: e.target.value })
                 }
                 maxLength={2000}
                 rows={3}
-                placeholder="A few details about this product..."
+                placeholder="چند توضیح درباره این محصول…"
               />
             </div>
             <div className="form-two-columns">
               <div className="space-y-2">
                 <Label htmlFor="product-price">
-                  Price (USD) <span className="required-mark">*</span>
+                  قیمت (دلار آمریکا) <span className="required-mark">*</span>
                 </Label>
                 <Input
                   id="product-price"
@@ -1561,7 +1563,7 @@ export function Dashboard({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="product-stock">
-                  Stock quantity <span className="required-mark">*</span>
+                  تعداد موجودی <span className="required-mark">*</span>
                 </Label>
                 <Input
                   id="product-stock"
@@ -1578,11 +1580,7 @@ export function Dashboard({
                 />
               </div>
             </div>
-            {formError && (
-              <p className="form-error" role="alert">
-                {formError}
-              </p>
-            )}
+            {formError && <FormAlert>{formError}</FormAlert>}
             <div className="dialog-form-footer">
               <Button
                 type="button"
@@ -1590,11 +1588,11 @@ export function Dashboard({
                 onClick={() => setEditor(null)}
                 disabled={saving}
               >
-                Cancel
+                انصراف
               </Button>
               <Button type="submit" disabled={saving}>
                 {saving ? <LoaderCircle className="animate-spin" /> : <Check />}
-                {editor?.product ? "Save changes" : "Create product"}
+                {editor?.product ? "ذخیره تغییرات" : "ایجاد محصول"}
               </Button>
             </div>
           </form>
@@ -1612,10 +1610,10 @@ export function Dashboard({
             <span className="dialog-icon destructive-icon">
               <Trash2 size={20} />
             </span>
-            <DialogTitle>Delete this product?</DialogTitle>
+            <DialogTitle>این محصول حذف شود؟</DialogTitle>
             <DialogDescription>
-              “{deleting?.name}” will be removed from your catalog. This action
-              can’t be undone.
+              “{deleting?.name}» از فهرست محصولات حذف خواهد شد. این کار قابل
+              بازگشت نیست.
             </DialogDescription>
           </DialogHeader>
           <div className="dialog-form-footer">
@@ -1624,15 +1622,14 @@ export function Dashboard({
               onClick={() => setDeleting(null)}
               disabled={saving}
             >
-              Keep product
+              نگهداری محصول
             </Button>
             <Button
               variant="destructive"
               onClick={() => void deleteProduct()}
               disabled={saving}
             >
-              {saving && <LoaderCircle className="animate-spin" />}Delete
-              product
+              {saving && <LoaderCircle className="animate-spin" />}حذف محصول
             </Button>
           </div>
         </DialogContent>
@@ -1651,32 +1648,34 @@ export function Dashboard({
             </span>
             <DialogTitle>{detail?.name}</DialogTitle>
             <DialogDescription>
-              {detail?.description || "No description added yet."}
+              {detail?.description || "توضیحی ثبت نشده است."}
             </DialogDescription>
           </DialogHeader>
           {detail && (
             <>
               <dl className="product-detail">
                 <div>
-                  <dt>Status</dt>
+                  <dt>وضعیت</dt>
                   <dd>
                     <StockBadge quantity={detail.stockQuantity} />
                   </dd>
                 </div>
                 <div>
-                  <dt>Price</dt>
-                  <dd>{money(detail.price)}</dd>
+                  <dt>قیمت</dt>
+                  <dd>
+                    <bdi dir="ltr">{money(detail.price)}</bdi>
+                  </dd>
                 </div>
                 <div>
-                  <dt>Units in stock</dt>
+                  <dt>تعداد موجودی</dt>
                   <dd>{number(detail.stockQuantity)}</dd>
                 </div>
                 <div>
-                  <dt>Product ID</dt>
+                  <dt>شناسه محصول</dt>
                   <dd>PRD-{String(detail.id).padStart(4, "0")}</dd>
                 </div>
                 <div>
-                  <dt>Added to workspace</dt>
+                  <dt>زمان افزودن به فضای کاری</dt>
                   <dd>
                     {new Date(detail.createdAtUtc).toLocaleDateString("en-US", {
                       month: "long",
@@ -1687,7 +1686,7 @@ export function Dashboard({
                 </div>
               </dl>
               <Button onClick={() => openEditor(detail)}>
-                <Pencil /> Edit product
+                <Pencil /> ویرایش محصول
               </Button>
             </>
           )}
@@ -1713,21 +1712,21 @@ export function Dashboard({
             </span>
             <DialogTitle>
               {help === "support"
-                ? "A little help, right here."
+                ? "راهنما در دسترس شماست."
                 : help === "status"
-                  ? "Workspace status"
+                  ? "وضعیت فضای کاری"
                   : help === "privacy"
-                    ? "Your workspace. Your data."
-                    : "Make yourself at home."}
+                    ? "فضای کاری شما، داده‌های شما."
+                    : "به فضای کاری خود خوش آمدید."}
             </DialogTitle>
             <DialogDescription>
               {help === "support"
-                ? "Your workspace administrator manages your account and server connection. Share the information below if you need help."
+                ? "مدیر فضای کاری، حساب و اتصال سرور شما را مدیریت می‌کند. در صورت نیاز به کمک، اطلاعات زیر را با او در میان بگذارید."
                 : help === "status"
-                  ? "The current connection state for this workspace."
+                  ? "وضعیت فعلی اتصال فضای کاری."
                   : help === "privacy"
-                    ? "This frontend stores no account credentials in your browser. Your session is protected with a signed, HTTP-only cookie."
-                    : "Everything you need to get started with TDMSMANAGMENT."}
+                    ? "اطلاعات ورود در مرورگر ذخیره نمی‌شود. نشست شما با یک کوکی امضاشده و محدود به سرور محافظت می‌شود."
+                    : "اطلاعات لازم برای شروع کار با TDMSMANAGMENT."}
             </DialogDescription>
           </DialogHeader>
           {help === "guide" ? (
@@ -1735,32 +1734,32 @@ export function Dashboard({
               <div>
                 <span>01</span>
                 <div>
-                  <h3>Build your catalog</h3>
+                  <h3>فهرست محصولات را بسازید</h3>
                   <p>
-                    Add a product, set its price, and enter available stock.
-                    Find it all under Products.
+                    محصول را اضافه کنید و قیمت و موجودی آن را وارد کنید. همه
+                    اطلاعات در بخش محصولات در دسترس است.
                   </p>
                 </div>
               </div>
               <div>
                 <span>02</span>
                 <div>
-                  <h3>Keep a clear view</h3>
+                  <h3>همیشه دید روشنی داشته باشید</h3>
                   <p>
-                    Inventory analytics turns your current catalog into stock
-                    and value summaries.
+                    تحلیل موجودی، خلاصه‌ای از تعداد و ارزش محصولات شما ارائه
+                    می‌کند.
                   </p>
                 </div>
               </div>
               <div>
                 <span>03</span>
                 <div>
-                  <h3>Connect your .NET API</h3>
+                  <h3>اتصال به سرویس دات‌نت</h3>
                   <p>
-                    Set <code>TDMS_DATA_SOURCE=api</code> and{" "}
-                    <code>TDMS_API_BASE_URL</code> in <code>.env.local</code>,
-                    then restart Next.js. See the included frontend README for
-                    commands.
+                    تنظیم کنید <code>TDMS_DATA_SOURCE=api</code> و{" "}
+                    <code>TDMS_API_BASE_URL</code> در <code>.env.local</code>،
+                    سپس رابط کاربری را دوباره اجرا کنید. راهنمای اجرا در فایل
+                    README رابط کاربری آمده است.
                   </p>
                 </div>
               </div>
@@ -1769,47 +1768,50 @@ export function Dashboard({
             <div className="help-body">
               <p>
                 {mode === "demo"
-                  ? "Demo products are saved in the .data folder on this local server."
-                  : "Your products are read from and saved to your configured .NET API."}{" "}
-                No analytics trackers or third-party account services are used.
+                  ? "محصولات آزمایشی در پوشه داده‌های محلی این سرور ذخیره می‌شوند."
+                  : "محصولات از سرویس دات‌نت خوانده و در همان سرویس ذخیره می‌شوند."}{" "}
+                از ردیاب‌های تحلیلی یا سرویس‌های حساب کاربری شخص ثالث استفاده
+                نمی‌شود.
               </p>
               <p>
-                Signing out clears your session cookie. To remove local demo
-                products, stop the app and remove the frontend’s .data
-                directory.
+                خروج از حساب، کوکی نشست را پاک می‌کند. برای حذف محصولات آزمایشی
+                محلی، برنامه را متوقف و پوشه داده‌های محلی رابط کاربری را حذف
+                کنید.
               </p>
             </div>
           ) : (
             <dl className="product-detail">
               <div>
-                <dt>Application</dt>
+                <dt>برنامه</dt>
                 <dd>TDMSMANAGMENT v1.0</dd>
               </div>
               <div>
-                <dt>Account</dt>
-                <dd>{email}</dd>
+                <dt>حساب کاربری</dt>
+                <dd>
+                  <bdi dir="ltr">{email}</bdi>
+                </dd>
               </div>
               <div>
-                <dt>Data source</dt>
-                <dd>{mode === "demo" ? "Local demo" : ".NET API"}</dd>
+                <dt>منبع داده</dt>
+                <dd>{mode === "demo" ? "نسخه آزمایشی محلی" : ".NET API"}</dd>
               </div>
               <div>
-                <dt>Catalog connection</dt>
+                <dt>اتصال فهرست محصولات</dt>
                 <dd>
                   <span
                     className={cn("status-dot", loadError && "error-dot")}
                   />
                   {loading
-                    ? "Checking…"
+                    ? "در حال بررسی…"
                     : loadError
-                      ? "Connection needs attention"
-                      : "Available"}
+                      ? "اتصال نیازمند بررسی است"
+                      : "در دسترس"}
                 </dd>
               </div>
             </dl>
           )}
           <Button variant="outline" onClick={() => setHelp(null)}>
-            Got it <Check />
+            متوجه شدم <Check />
           </Button>
         </DialogContent>
       </Dialog>
@@ -1819,19 +1821,13 @@ export function Dashboard({
 
 function StockBadge({ quantity }: { quantity: number }) {
   return (
-    <span
-      className={cn(
-        "stock-badge",
-        quantity === 0 ? "out" : quantity < 10 ? "low" : "healthy",
-      )}
+    <Chip
+      color={quantity === 0 ? "danger" : quantity < 10 ? "warning" : "success"}
+      size="sm"
+      variant="soft"
     >
-      <span />
-      {quantity === 0
-        ? "Out of stock"
-        : quantity < 10
-          ? "Low stock"
-          : "In stock"}
-    </span>
+      {quantity === 0 ? "ناموجود" : quantity < 10 ? "موجودی کم" : "موجود"}
+    </Chip>
   );
 }
 function Stat({
@@ -1864,8 +1860,8 @@ function Stat({
 function LoadingState() {
   return (
     <div className="loading-state" role="status">
-      <LoaderCircle className="animate-spin" size={22} />
-      <span>Getting your workspace ready...</span>
+      <OrbitRing className="size-6 text-primary" />
+      <span>در حال آماده‌سازی فضای کاری…</span>
     </div>
   );
 }
@@ -1879,10 +1875,10 @@ function ErrorState({
   return (
     <div className="empty-state error-state" role="alert">
       <Database size={28} />
-      <h3>Let’s reconnect.</h3>
+      <h3>اتصال را دوباره برقرار کنید.</h3>
       <p>{message}</p>
       <Button variant="outline" onClick={() => void retry()}>
-        Try again
+        تلاش دوباره
       </Button>
     </div>
   );

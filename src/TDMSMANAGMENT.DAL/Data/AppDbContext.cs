@@ -7,6 +7,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Company> Companies => Set<Company>();
+    public DbSet<SubCompany> SubCompanies => Set<SubCompany>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,5 +31,13 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
         company.Property(c => c.CompanyID).HasMaxLength(100).IsRequired();
         company.Property(c => c.CompanyCode).HasColumnName("companycode").HasMaxLength(50).IsRequired();
         company.Property(c => c.IsActive).IsRequired();
+
+        var subCompany = modelBuilder.Entity<SubCompany>();
+        subCompany.ToTable("SubCompanies");
+        subCompany.HasKey(s => s.Id);
+        subCompany.Property(s => s.Name).HasMaxLength(200).IsRequired();
+        subCompany.Property(s => s.IsActive).IsRequired();
+        subCompany.HasOne(s => s.Company).WithMany(c => c.SubCompanies)
+            .HasForeignKey(s => s.CompanyId).OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 export function Brand({
   compact = false,
   className,
@@ -8,11 +9,13 @@ export function Brand({
 }) {
   return (
     <span className={cn("brand", className)}>
-      <span className="brand-symbol" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </span>
+      <Image
+        src="/branding/nioc-logo.webp"
+        alt=""
+        width={32}
+        height={36}
+        className="brand-logo"
+      />
       {!compact && (
         <span className="brand-wordmark">
           TDMS<span>MANAGMENT</span>
