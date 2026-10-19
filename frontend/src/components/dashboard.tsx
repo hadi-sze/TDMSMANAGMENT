@@ -18,7 +18,6 @@ import {
   ChevronRight,
   ChevronsUpDown,
   CircleHelp,
-  Clock3,
   Database,
   Download,
   Ellipsis,
@@ -46,7 +45,8 @@ import {
 import { toast } from "sonner";
 import Table from "@mui/joy/Table";
 import Chip from "@mui/joy/Chip";
-import { OrbitRing } from "@/components/orbit-ring";
+import { TableFeedback } from "@/components/loading-ui/table-feedback";
+import { OrbitRing } from "@/components/loading-ui/orbit-ring";
 import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
 import { Brand } from "@/components/brand";
 import { SubCompaniesPanel } from "@/components/subcompanies-panel";
@@ -138,7 +138,7 @@ export function Dashboard({
   const [loadError, setLoadError] = useState("");
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
-  const [inventoryOpen, setInventoryOpen] = useState(false);
+  const [productsOpen, setProductsOpen] = useState(view === "products");
   const [companiesOpen, setCompaniesOpen] = useState(
     view === "companies" || view === "subcompanies",
   );
@@ -401,19 +401,91 @@ export function Dashboard({
           <Link
             href="/dashboard"
             className={cn("nav-item", view === "home" && "active")}
+            aria-current={view === "home" ? "page" : undefined}
           >
             <Home />
             <span>صفحه اصلی</span>
           </Link>
 
-          <Link
-            href="/dashboard/products"
+          <button
             className={cn("nav-item", view === "products" && "active")}
+            aria-label="منوی محصولات"
+            aria-expanded={productsOpen && !collapsed}
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setProductsOpen(true);
+              } else setProductsOpen(!productsOpen);
+            }}
           >
             <Package />
             <span>محصولات</span>
             <span className="nav-count">{loading ? "–" : products.length}</span>
-          </Link>
+            <ChevronRight
+              className={cn("nav-chevron", productsOpen && "rotate-90")}
+            />
+          </button>
+          <NavCollapse open={productsOpen && !collapsed}>
+            <ul
+              className="recent-list company-navigation"
+              aria-label="ناوبری محصولات"
+            >
+              <li>
+                <Link
+                  href="/dashboard/products"
+                  onClick={() => setMobile(false)}
+                  aria-current={
+                    view === "products" && !searchParams.has("stock")
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Package size={13} />
+                  همه محصولات
+                </Link>
+              </li>
+              <li>
+                <button
+                  className="submenu-action"
+                  onClick={() => {
+                    setMobile(false);
+                    openEditor();
+                  }}
+                >
+                  <Plus size={13} />
+                  افزودن محصول
+                </button>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/products?stock=low"
+                  onClick={() => setMobile(false)}
+                  aria-current={
+                    view === "products" && searchParams.get("stock") === "low"
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Layers3 size={13} />
+                  موجودی کم
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/products?stock=out"
+                  onClick={() => setMobile(false)}
+                  aria-current={
+                    view === "products" && searchParams.get("stock") === "out"
+                      ? "page"
+                      : undefined
+                  }
+                >
+                  <Box size={13} />
+                  ناموجود
+                </Link>
+              </li>
+            </ul>
+          </NavCollapse>
           <button
             className={cn(
               "nav-item",
@@ -467,6 +539,7 @@ export function Dashboard({
           <Link
             href="/dashboard/analytics"
             className={cn("nav-item", view === "analytics" && "active")}
+            aria-current={view === "analytics" ? "page" : undefined}
           >
             <Activity />
             <span>نمای کلی و بینش‌ها</span>
@@ -474,35 +547,6 @@ export function Dashboard({
             <ChevronRight className="nav-chevron" />
           </Link>
           <div className="nav-label">ایجاد و مدیریت</div>
-          <button className="nav-item" onClick={() => openEditor()}>
-            <Box />
-            <span>ایجاد محصول</span>
-            <Plus className="nav-chevron" />
-          </button>
-          <button
-            className="nav-item"
-            aria-expanded={inventoryOpen && !collapsed}
-            aria-label="موجودی"
-            onClick={() => {
-              if (collapsed) {
-                setCollapsed(false);
-                setInventoryOpen(true);
-              } else setInventoryOpen(!inventoryOpen);
-            }}
-          >
-            <Layers3 />
-            <span>موجودی</span>
-            <ChevronRight
-              className={cn("nav-chevron", inventoryOpen && "rotate-90")}
-            />
-          </button>
-          <NavCollapse open={inventoryOpen && !collapsed}>
-            <div className="recent-list inventory-subnav">
-              <Link href="/dashboard/products">همه محصولات</Link>
-              <Link href="/dashboard/products?stock=low">موجودی کم</Link>
-              <Link href="/dashboard/products?stock=out">ناموجود</Link>
-            </div>
-          </NavCollapse>
 
           <button
             className="nav-item"
@@ -514,11 +558,7 @@ export function Dashboard({
             <Download className="nav-chevron" />
           </button>
           <div className="nav-label">امنیت و اتصال</div>
-          <Link href="/dashboard/settings" className="nav-item">
-            <ShieldCheck />
-            <span>دسترسی و امنیت</span>
-            <ChevronRight className="nav-chevron" />
-          </Link>
+
           <button className="nav-item" onClick={() => setHelp("guide")}>
             <BookOpen />
             <span>شروع کار</span>
@@ -879,7 +919,17 @@ export function Dashboard({
                   <LoadingState />
                 ) : (
                   <>
-                    <div className="table-scroll">
+                    <TableFeedback
+                      busy={saving}
+                      changeKey={JSON.stringify([
+                        query,
+                        stock,
+                        sort,
+                        currentPage,
+                        pageSize,
+                        products,
+                      ])}
+                    >
                       <Table hoverRow size="sm" className="product-table">
                         <thead>
                           <tr>
@@ -1035,7 +1085,7 @@ export function Dashboard({
                           </Button>
                         </div>
                       )}
-                    </div>
+                    </TableFeedback>
                     <div className="table-footer">
                       <span>
                         {filtered.length

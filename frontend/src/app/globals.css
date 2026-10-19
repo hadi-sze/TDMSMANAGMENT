@@ -3447,3 +3447,67 @@ html:lang(fa)
     font-size: 12px;
   }
 }
+@media (max-width: 640px) {
+  .app-shell .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .app-shell .company-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .app-shell .company-stats .stat-card {
+    padding: 12px 8px;
+  }
+  .app-shell .company-stats .stat-card > div {
+    min-height: 38px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .app-shell .company-stats .stat-card > div > svg {
+    display: none;
+  }
+  .app-shell .company-stats .stat-card > strong {
+    font-size: 24px;
+  }
+}
+
+.app-shell .recent-list .submenu-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 11px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: start;
+  cursor: pointer;
+  border-radius: 7px;
+}
+.app-shell .recent-list .submenu-action:hover {
+  color: var(--primary);
+  background: #fffaf6;
+}
+
+.table-feedback {
+  position: relative;
+  min-height: 180px;
+}
+.table-feedback-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  background: rgb(255 255 255 / 85%);
+  border-radius: 8px;
+  cursor: progress;
+}
+.table-feedback-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px;
+  font-size: 14px;
+  color: #626975;
+}

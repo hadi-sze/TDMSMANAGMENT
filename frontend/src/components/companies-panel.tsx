@@ -34,9 +34,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { Company } from "@/lib/companies";
 import Table from "@mui/joy/Table";
+import JoyButton from "@mui/joy/Button";
 import Chip from "@mui/joy/Chip";
 import Switch from "@mui/joy/Switch";
-import { OrbitRing } from "@/components/orbit-ring";
+import { TableFeedback } from "@/components/loading-ui/table-feedback";
+import { OrbitRing } from "@/components/loading-ui/orbit-ring";
 import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
 
 type Fields = Omit<Company, "id">;
@@ -197,9 +199,16 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
           <h1>شرکت‌ها</h1>
           <p>اطلاعات شرکت‌ها، منظم و یکپارچه.</p>
         </div>
-        <Button onClick={() => openEditor()}>
-          <Plus /> افزودن شرکت
-        </Button>
+        <JoyButton
+          variant="solid"
+          color="primary"
+          size="md"
+          startDecorator={<Plus size={18} />}
+          onClick={() => openEditor()}
+          sx={{ minHeight: 40, borderRadius: 8, fontSize: 14 }}
+        >
+          افزودن شرکت
+        </JoyButton>
       </div>
       <div className="stats-grid company-stats">
         <div className="stat-card">
@@ -273,7 +282,15 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
           </div>
         ) : (
           <>
-            <div className="table-scroll">
+            <TableFeedback
+              busy={saving}
+              changeKey={JSON.stringify([
+                query,
+                status,
+                currentPage,
+                companies,
+              ])}
+            >
               <Table hoverRow size="sm" className="product-table company-table">
                 <thead>
                   <tr>
@@ -406,7 +423,7 @@ export function CompaniesPanel({ mode }: { mode: "demo" | "api" }) {
                   </Button>
                 </div>
               )}
-            </div>
+            </TableFeedback>
             <div className="table-footer">
               <span>
                 {filtered.length

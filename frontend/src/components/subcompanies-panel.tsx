@@ -37,7 +37,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
-import { OrbitRing } from "@/components/orbit-ring";
+import { TableFeedback } from "@/components/loading-ui/table-feedback";
+import { OrbitRing } from "@/components/loading-ui/orbit-ring";
 import type { Company } from "@/lib/companies";
 import type { SubCompany } from "@/lib/subcompanies";
 
@@ -330,7 +331,17 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
           </div>
         ) : (
           <>
-            <div className="table-scroll">
+            <TableFeedback
+              busy={saving}
+              changeKey={JSON.stringify([
+                query,
+                status,
+                parentFilter,
+                currentPage,
+                items,
+                companies,
+              ])}
+            >
               {rows.length ? (
                 <Table
                   hoverRow
@@ -458,7 +469,7 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
                   )}
                 </div>
               )}
-            </div>
+            </TableFeedback>
             <div className="table-footer">
               <span>
                 {filtered.length
