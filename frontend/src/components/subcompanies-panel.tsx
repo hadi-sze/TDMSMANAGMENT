@@ -247,11 +247,13 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
           <Plus /> افزودن شرکت تابعه
         </Button>
       </div>
-      <div className="stats-grid company-stats">
+      <div className="stats-grid company-stats subcompany-summary">
         <div className="stat-card">
           <div>
             <span>تعداد شرکت‌های تابعه</span>
-            <Building2 size={16} />
+            <span className="summary-icon">
+              <Building2 size={20} aria-hidden="true" />
+            </span>
           </div>
           <strong>{loading ? "—" : items.length}</strong>
           <p>در تمام شرکت‌های شما</p>
@@ -259,7 +261,9 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
         <div className="stat-card">
           <div>
             <span>شرکت‌های تابعه فعال</span>
-            <Check size={16} />
+            <span className="summary-icon">
+              <Check size={20} aria-hidden="true" />
+            </span>
           </div>
           <strong>{loading ? "—" : active}</strong>
           <p>آماده برای فعالیت</p>
@@ -267,7 +271,9 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
         <div className="stat-card">
           <div>
             <span>شرکت‌های مادر</span>
-            <Building2 size={16} />
+            <span className="summary-icon">
+              <Building2 size={20} aria-hidden="true" />
+            </span>
           </div>
           <strong>{loading ? "—" : companies.length}</strong>
           <p>قابل انتخاب به‌عنوان شرکت مادر</p>

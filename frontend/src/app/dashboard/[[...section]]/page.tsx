@@ -1,7 +1,4 @@
-import { notFound, redirect } from "next/navigation";
-import { Dashboard } from "@/components/dashboard";
-import { getSession } from "@/lib/auth";
-import { dataSource } from "@/lib/products";
+import { notFound } from "next/navigation";
 export const metadata = { title: "فضای کاری" };
 export default async function DashboardPage({
   params,
@@ -19,24 +16,16 @@ export default async function DashboardPage({
       "subcompanies",
       "analytics",
       "settings",
+      "reports-oil",
+      "reports-gas",
+      "reports-products",
+      "reports-operations",
+      "reports-assets",
+      "reports-shifts",
+      "production-companies",
+      "customers",
     ].includes(view)
   )
     notFound();
-  const session = await getSession();
-  if (!session) redirect("/login");
-  return (
-    <Dashboard
-      view={
-        view as
-          | "home"
-          | "products"
-          | "companies"
-          | "subcompanies"
-          | "analytics"
-          | "settings"
-      }
-      email={session.email}
-      mode={dataSource()}
-    />
-  );
+  return null;
 }

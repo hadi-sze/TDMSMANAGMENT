@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type CSSProperties,
+} from "react";
 import {
   Activity,
   ArrowRight,
@@ -13,6 +19,7 @@ import {
   Box,
   Building2,
   Check,
+  Clock3,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -20,9 +27,12 @@ import {
   CircleHelp,
   Database,
   Download,
+  Droplet,
+  Flame,
   Ellipsis,
   Eye,
   Folder,
+  Factory,
   Home,
   Layers3,
   LoaderCircle,
@@ -41,6 +51,7 @@ import {
   Sparkles,
   Trash2,
   UserRound,
+  UsersRound,
 } from "lucide-react";
 import { toast } from "sonner";
 import Table from "@mui/joy/Table";
@@ -51,6 +62,7 @@ import { FilterSelect, FormAlert } from "@/components/ui/joy-controls";
 import { Brand } from "@/components/brand";
 import { SubCompaniesPanel } from "@/components/subcompanies-panel";
 import { CompaniesPanel } from "@/components/companies-panel";
+import { SidebarResizer } from "@/components/ui/sidebar-resizer";
 import { NavCollapse } from "@/components/ui/nav-collapse";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -75,7 +87,20 @@ import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/products";
 
 type View =
-  "home" | "products" | "companies" | "subcompanies" | "analytics" | "settings";
+  | "home"
+  | "products"
+  | "companies"
+  | "subcompanies"
+  | "analytics"
+  | "settings"
+  | "reports-oil"
+  | "reports-products"
+  | "reports-operations"
+  | "reports-assets"
+  | "reports-shifts"
+  | "reports-gas"
+  | "production-companies"
+  | "customers";
 type ProductFields = {
   name: string;
   description: string;
@@ -97,6 +122,13 @@ const money = (value: number) =>
 const number = (value: number) => new Intl.NumberFormat("en-US").format(value);
 const route = (view: View) =>
   view === "home" ? "/dashboard" : `/dashboard/${view}`;
+const productionCompanies = [
+  { id: "central", name: "شرکت نفت مناطق مرکزی" },
+  { id: "south", name: "شرکت ملی مناطق نفت‌خیز جنوب" },
+  { id: "arvandan", name: "شرکت نفت و گاز اروندان" },
+  { id: "offshore", name: "شرکت نفت و گاز فلات قاره" },
+  { id: "pars", name: "شرکت نفت و گاز پارس" },
+];
 const titleFor: Record<View, string> = {
   home: "صفحه اصلی",
   products: "محصولات",
@@ -104,6 +136,14 @@ const titleFor: Record<View, string> = {
   subcompanies: "شرکت‌های تابعه",
   analytics: "تحلیل موجودی",
   settings: "تنظیمات حساب کاربری",
+  "reports-oil": "گزارشات نفت",
+  "reports-gas": "گزارشات گاز",
+  "reports-products": "گزارشات محصولات",
+  "reports-operations": "گزارشات عملیات/فعالیت‌ها",
+  "reports-assets": "گزارشات دارایی‌ها",
+  "reports-shifts": "گزارشات شیفت",
+  "production-companies": "شرکت‌های تولیدی",
+  customers: "مشتریان",
 };
 
 async function errorMessage(response: Response) {
@@ -122,22 +162,48 @@ async function errorMessage(response: Response) {
 }
 
 export function Dashboard({
-  view,
+  children,
   email,
   mode,
 }: {
-  view: View;
+  children: React.ReactNode;
   email: string;
   mode: "demo" | "api";
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const view = (pathname.split("/")[2] || "home") as View;
   const searchParams = useSearchParams();
+  const selectedProductionCompany = productionCompanies.find(
+    (company) => company.id === searchParams.get("company"),
+  );
+  const [productionOpen, setProductionOpen] = useState(
+    view === "production-companies",
+  );
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
+  const [sidebarWidth, setSidebarWidth] = useState(280);
+  const [sidebarResizing, setSidebarResizing] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = Number(localStorage.getItem("tdms-sidebar-width"));
+      if (saved >= 220 && saved <= 420) setSidebarWidth(saved);
+    } catch {
+      /* Storage can be unavailable in private browsers. */
+    }
+  }, []);
+  function resizeSidebar(width: number) {
+    setSidebarWidth(width);
+    try {
+      localStorage.setItem("tdms-sidebar-width", String(width));
+    } catch {
+      /* Resizing still works without storage. */
+    }
+  }
   const [collapsed, setCollapsed] = useState(false);
   const [mobile, setMobile] = useState(false);
+  const [reportsOpen, setReportsOpen] = useState(view.startsWith("reports-"));
   const [productsOpen, setProductsOpen] = useState(view === "products");
   const [companiesOpen, setCompaniesOpen] = useState(
     view === "companies" || view === "subcompanies",
@@ -188,9 +254,16 @@ export function Dashboard({
   }, [searchParams]);
   useEffect(() => {
     setMobile(false);
-  }, [pathname]);
+  }, [pathname, searchParams]);
   useEffect(() => {
     if (view === "companies" || view === "subcompanies") setCompaniesOpen(true);
+  }, [view]);
+  useEffect(() => {
+    if (view === "products") setProductsOpen(true);
+    if (view === "production-companies") setProductionOpen(true);
+  }, [view]);
+  useEffect(() => {
+    if (view.startsWith("reports-")) setReportsOpen(true);
   }, [view]);
   useEffect(() => {
     const key = (event: KeyboardEvent) => {
@@ -536,6 +609,61 @@ export function Dashboard({
               </li>
             </ul>
           </NavCollapse>
+          <button
+            className={cn(
+              "nav-item",
+              view === "production-companies" && "active",
+            )}
+            aria-label="منوی شرکت‌های تولیدی"
+            aria-expanded={productionOpen && !collapsed}
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setProductionOpen(true);
+              } else setProductionOpen(!productionOpen);
+            }}
+          >
+            <Factory />
+            <span>شرکت‌های تولیدی</span>
+            <ChevronRight
+              className={cn("nav-chevron", productionOpen && "rotate-90")}
+            />
+          </button>
+          <NavCollapse open={productionOpen && !collapsed}>
+            <ul
+              className="recent-list company-navigation production-navigation"
+              aria-label="ناوبری شرکت‌های تولیدی"
+            >
+              {productionCompanies.map((company) => (
+                <li key={company.id}>
+                  <Link
+                    href={
+                      "/dashboard/production-companies?company=" + company.id
+                    }
+                    aria-current={
+                      view === "production-companies" &&
+                      selectedProductionCompany?.id === company.id
+                        ? "page"
+                        : undefined
+                    }
+                    onClick={() => setMobile(false)}
+                  >
+                    <Factory size={14} aria-hidden="true" />
+                    <span>{company.name}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </NavCollapse>
+          <Link
+            href="/dashboard/customers"
+            className={cn("nav-item", view === "customers" && "active")}
+            aria-current={view === "customers" ? "page" : undefined}
+            onClick={() => setMobile(false)}
+          >
+            <UsersRound />
+            <span>مشتریان</span>
+          </Link>
           <Link
             href="/dashboard/analytics"
             className={cn("nav-item", view === "analytics" && "active")}
@@ -546,6 +674,73 @@ export function Dashboard({
             <span className="new-tag">جدید</span>
             <ChevronRight className="nav-chevron" />
           </Link>
+          <button
+            className={cn("nav-item", view.startsWith("reports-") && "active")}
+            aria-label="منوی گزارشات"
+            aria-expanded={reportsOpen && !collapsed}
+            onClick={() => {
+              if (collapsed) {
+                setCollapsed(false);
+                setReportsOpen(true);
+              } else setReportsOpen(!reportsOpen);
+            }}
+          >
+            <BarChart3 />
+            <span>گزارشات</span>
+            <ChevronRight
+              className={cn("nav-chevron", reportsOpen && "rotate-90")}
+            />
+          </button>
+          <NavCollapse open={reportsOpen && !collapsed}>
+            <ul
+              className="recent-list company-navigation"
+              aria-label="ناوبری گزارشات"
+            >
+              {(
+                [
+                  { view: "reports-products", label: "محصولات", icon: Package },
+                  {
+                    view: "reports-operations",
+                    label: "عملیات/فعالیت‌ها",
+                    icon: Activity,
+                  },
+                  { view: "reports-assets", label: "دارایی‌ها", icon: Box },
+                  { view: "reports-shifts", label: "شیفت", icon: Clock3 },
+                ] as const
+              ).map((item) => (
+                <li key={item.view}>
+                  <Link
+                    href={"/dashboard/" + item.view}
+                    onClick={() => setMobile(false)}
+                    aria-current={view === item.view ? "page" : undefined}
+                  >
+                    <item.icon size={14} aria-hidden="true" />
+                    <span>{item.label}</span>
+                  </Link>
+                </li>
+              ))}
+              <li>
+                <Link
+                  href="/dashboard/reports-oil"
+                  onClick={() => setMobile(false)}
+                  aria-current={view === "reports-oil" ? "page" : undefined}
+                >
+                  <Droplet size={14} aria-hidden="true" />
+                  <span>نفت</span>
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/dashboard/reports-gas"
+                  onClick={() => setMobile(false)}
+                  aria-current={view === "reports-gas" ? "page" : undefined}
+                >
+                  <Flame size={14} aria-hidden="true" />
+                  <span>گاز</span>
+                </Link>
+              </li>
+            </ul>
+          </NavCollapse>
           <div className="nav-label">ایجاد و مدیریت</div>
 
           <button
@@ -595,11 +790,29 @@ export function Dashboard({
   );
 
   return (
-    <div className={cn("app-shell", collapsed && "sidebar-collapsed")}>
+    <div
+      className={cn(
+        "app-shell",
+        collapsed && "sidebar-collapsed",
+        sidebarResizing && "sidebar-resizing",
+      )}
+      style={
+        { "--preferred-sidebar-width": `${sidebarWidth}px` } as CSSProperties
+      }
+    >
       <a className="skip-link" href="#main-content">
         رفتن به محتوای اصلی
       </a>
-      <aside className="sidebar desktop-sidebar">{sidebarContents}</aside>
+      <aside className="sidebar desktop-sidebar">
+        {sidebarContents}
+        {!collapsed && (
+          <SidebarResizer
+            width={sidebarWidth}
+            onResize={resizeSidebar}
+            onDragging={setSidebarResizing}
+          />
+        )}
+      </aside>
       <Dialog open={mobile} onOpenChange={setMobile}>
         <DialogContent className="mobile-nav-dialog">
           <DialogHeader className="sr-only">
@@ -674,6 +887,7 @@ export function Dashboard({
           id="main-content"
           className={cn("page-content", view === "home" && "home-content")}
         >
+          {children}
           {view === "home" && (
             <section className="home-view">
               <button
@@ -1144,6 +1358,67 @@ export function Dashboard({
             </section>
           )}
 
+          {view === "customers" && (
+            <section className="workspace-page">
+              <div className="page-heading">
+                <div>
+                  <span className="section-eyebrow">فضای کاری شما</span>
+                  <h1>مشتریان</h1>
+                  <p>اطلاعات مشتریان در این بخش نمایش داده می‌شود.</p>
+                </div>
+              </div>
+              <div className="catalog-panel">
+                <div className="empty-state">
+                  <UsersRound size={32} aria-hidden="true" />
+                  <h3>فهرست مشتریان هنوز تعریف نشده است</h3>
+                  <p>
+                    این بخش برای مدیریت اطلاعات مشتریان در نظر گرفته شده است.
+                  </p>
+                </div>
+              </div>
+            </section>
+          )}
+          {view === "production-companies" && (
+            <section className="workspace-page">
+              <div className="page-heading">
+                <div>
+                  <span className="section-eyebrow">سازمان‌های شما</span>
+                  <h1>
+                    {selectedProductionCompany?.name || "شرکت‌های تولیدی"}
+                  </h1>
+                  <p>اطلاعات شرکت‌های تولیدی در این بخش نمایش داده می‌شود.</p>
+                </div>
+              </div>
+              <div className="catalog-panel">
+                <div className="empty-state">
+                  <Factory size={32} aria-hidden="true" />
+                  <h3>
+                    {selectedProductionCompany
+                      ? "اطلاعات این شرکت هنوز تعریف نشده است"
+                      : "شرکت موردنظر را از زیرمنو انتخاب کنید"}
+                  </h3>
+                  <p>برای این بخش هنوز اطلاعاتی ثبت نشده است.</p>
+                </div>
+              </div>
+            </section>
+          )}
+          {view.startsWith("reports-") && (
+            <section className="workspace-page">
+              <div className="page-heading">
+                <div>
+                  <span className="section-eyebrow">گزارشات</span>
+                  <h1>{titleFor[view]}</h1>
+                </div>
+              </div>
+              <div className="catalog-panel">
+                <div className="empty-state">
+                  <BarChart3 size={32} />
+                  <h3>هنوز گزارشی تعریف نشده است</h3>
+                  <p>{titleFor[view]} در این بخش نمایش داده خواهند شد.</p>
+                </div>
+              </div>
+            </section>
+          )}
           {view === "analytics" && (
             <section className="workspace-page">
               <div className="page-heading">

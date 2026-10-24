@@ -3511,3 +3511,169 @@ html:lang(fa)
   font-size: 14px;
   color: #626975;
 }
+
+/* Organization summary: clear hierarchy without implying trends or growth. */
+.app-shell .subcompany-summary .stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 20px 22px;
+  border-radius: 16px;
+  border-color: #e5e9ef;
+  background: linear-gradient(135deg, #fff 55%, #fff7f1);
+  box-shadow: 0 3px 12px rgb(24 39 75 / 3%);
+}
+.app-shell .subcompany-summary .stat-card > div {
+  font-size: 14px;
+  color: #515c6c;
+  gap: 12px;
+}
+.app-shell .subcompany-summary .summary-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  background: #fff0e5;
+  color: #c6511d;
+}
+.app-shell .subcompany-summary .stat-card:nth-child(2) {
+  background: linear-gradient(135deg, #fff 55%, #f0faf5);
+}
+.app-shell .subcompany-summary .stat-card:nth-child(2) .summary-icon {
+  background: #e5f6ec;
+  color: #24844f;
+}
+.app-shell .subcompany-summary .stat-card:nth-child(3) {
+  background: linear-gradient(135deg, #fff 55%, #f0f5ff);
+}
+.app-shell .subcompany-summary .stat-card:nth-child(3) .summary-icon {
+  background: #e9f0ff;
+  color: #4568aa;
+}
+.app-shell .subcompany-summary .stat-card > strong {
+  font-size: 36px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin: 8px 0 6px;
+}
+.app-shell .subcompany-summary .stat-card > p {
+  display: block;
+  font-size: 12px;
+  color: #707b89;
+  line-height: 1.7;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .app-shell .subcompany-summary {
+    gap: 8px;
+  }
+  .app-shell .subcompany-summary .stat-card {
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+  .app-shell .subcompany-summary .stat-card > div {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .app-shell .subcompany-summary .summary-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+  }
+  .app-shell .subcompany-summary .summary-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+  .app-shell .subcompany-summary .stat-card > strong {
+    font-size: 28px;
+    margin-top: 10px;
+  }
+  .app-shell .subcompany-summary .stat-card > p {
+    display: none;
+  }
+}
+
+.app-shell .production-navigation a {
+  align-items: flex-start;
+  white-space: normal;
+}
+.app-shell .production-navigation a > svg {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
+/* A draggable divider keeps navigation readable without taking over the workspace. */
+@media (min-width: 761px) {
+  .app-shell {
+    --sidebar-width: clamp(220px, var(--preferred-sidebar-width, 280px), 42vw);
+  }
+  .app-shell.sidebar-collapsed {
+    --sidebar-width: 69px;
+  }
+}
+.sidebar-resizer {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: -5px;
+  width: 10px;
+  z-index: 40;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sidebar-resizer::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 4px;
+  width: 2px;
+  background: transparent;
+  transition: background 150ms;
+}
+.sidebar-resizer:hover::before,
+.sidebar-resizer:focus-visible::before,
+.sidebar-resizing .sidebar-resizer::before {
+  background: #ed5b20;
+}
+.sidebar-resizer > span {
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: 8px;
+  height: 34px;
+  border: 1px solid #d9dde4;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 4px #0001;
+}
+.sidebar-resizer:focus-visible {
+  outline: none;
+}
+.sidebar-resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+.sidebar-resizing .sidebar,
+.sidebar-resizing .app-main {
+  transition: none;
+}
+.app-shell .desktop-sidebar .nav-item {
+  min-width: 0;
+}
+.app-shell .desktop-sidebar .nav-item > span:not(.nav-count):not(.new-tag) {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.app-shell .desktop-sidebar .sidebar-body {
+  overflow-x: hidden;
+}
+.mobile-nav-dialog .mobile-sidebar {
+  width: min(320px, calc(100vw - 48px));
+}
+@media (max-width: 760px) {
+  .sidebar-resizer {
+    display: none;
+  }
+}
