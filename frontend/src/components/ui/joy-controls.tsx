@@ -25,6 +25,7 @@ export function FilterSelect({
 }) {
   return (
     <Select
+      className="animated-filter-select"
       id={id}
       placeholder={placeholder}
       aria-label={label}
@@ -34,6 +35,7 @@ export function FilterSelect({
       }}
       slotProps={{
         listbox: {
+          className: "animated-filter-listbox",
           dir: "rtl",
           disablePortal,
           sx: { zIndex: 1300, fontSize: 14, maxHeight: 240 },
