@@ -783,7 +783,7 @@ export function Dashboard({
         </button>
         <span>
           <span className="status-dot" />{" "}
-          {mode === "demo" ? "فضای کاری آزمایشی" : "متصل به دات‌نت"}
+          {mode === "demo" ? "فضای کاری آزمایشی" : "اتصال"}
         </span>
       </div>
     </>
