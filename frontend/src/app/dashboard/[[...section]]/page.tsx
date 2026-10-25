@@ -24,6 +24,7 @@ export default async function DashboardPage({
       "reports-shifts",
       "production-companies",
       "customers",
+      "import-center",
     ].includes(view)
   )
     notFound();

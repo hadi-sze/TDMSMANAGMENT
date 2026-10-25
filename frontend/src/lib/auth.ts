@@ -2,14 +2,13 @@ import "server-only";
 import {
   createHmac,
   randomBytes,
-  scryptSync,
   timingSafeEqual,
 } from "node:crypto";
 import { cookies } from "next/headers";
 
 export const SESSION_COOKIE = "tdms_session";
 export const SESSION_AGE = 60 * 60 * 8;
-type Session = { email: string; expires: number };
+type Session = { email: string; expires: number; stamp: string };
 const runtime = globalThis as typeof globalThis & {
   tdmsDevelopmentSecret?: string;
 };
@@ -38,19 +37,20 @@ export function loginConfig() {
   return { email, password };
 }
 
-export function verifyCredentials(email: string, password: string) {
-  const configured = loginConfig();
-  const expected = scryptSync(configured.password, "tdms-login-v1", 64);
-  const actual = scryptSync(password, "tdms-login-v1", 64);
-  return (
-    timingSafeEqual(expected, actual) &&
-    email.toLowerCase() === configured.email.toLowerCase()
-  );
+export async function accountRequest(action: string, body: unknown) {
+  const base = process.env.TDMS_API_BASE_URL || "http://127.0.0.1:5043";
+  return fetch(`${base.replace(/\/$/, "")}/api/account/${action}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
+  });
 }
 
-export function createSession(email: string) {
+export function createSession(email: string, stamp: string) {
   const payload = Buffer.from(
-    JSON.stringify({ email, expires: Date.now() + SESSION_AGE * 1000 }),
+    JSON.stringify({ email, stamp, expires: Date.now() + SESSION_AGE * 1000 }),
   ).toString("base64url");
   return `${payload}.${createHmac("sha256", secret()).update(payload).digest("base64url")}`;
 }
@@ -68,11 +68,10 @@ export async function getSession(): Promise<Session | null> {
     const session = JSON.parse(
       Buffer.from(payload, "base64url").toString(),
     ) as Session;
-    return typeof session.email === "string" &&
-      typeof session.expires === "number" &&
-      session.expires > Date.now()
-      ? session
-      : null;
+    if (typeof session.email !== "string" || typeof session.stamp !== "string" ||
+        typeof session.expires !== "number" || session.expires <= Date.now()) return null;
+    const response = await accountRequest("validate-session", { email: session.email, stamp: session.stamp });
+    return response.ok ? session : null;
   } catch {
     return null;
   }

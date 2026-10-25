@@ -6,11 +6,17 @@ namespace TDMSMANAGMENT.DAL.Data;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<SubCompany> SubCompanies => Set<SubCompany>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        var account = modelBuilder.Entity<UserAccount>();
+        account.Property(a => a.Email).HasMaxLength(254).IsRequired();
+        account.HasIndex(a => a.Email).IsUnique();
+        account.Property(a => a.PasswordHash).HasMaxLength(512).IsRequired();
+        account.Property(a => a.RowVersion).IsRowVersion();
         var product = modelBuilder.Entity<Product>();
         product.ToTable("Products", table =>
         {

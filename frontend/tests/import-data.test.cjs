@@ -1,0 +1,10 @@
+const ts = require('typescript'), fs = require('node:fs'), vm = require('node:vm'), assert = require('node:assert/strict'), test = require('node:test');
+const context = {exports:{}};
+vm.runInNewContext(ts.transpileModule(fs.readFileSync('src/lib/import-data.ts','utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,context);
+const {validateImportRow,flatRecords}=context.exports;
+const mapping={name:'name',companyId:'companyId',isActive:'isActive'};
+test('Persian parent IDs and false values',()=>{const r=validateImportRow('subcompanies',{name:'Branch',companyId:'۲',isActive:'غیرفعال'},mapping,[2]);assert.equal(r.errors.length,0);assert.equal(r.data.companyId,2);assert.equal(r.data.isActive,false);});
+test('unknown parents and invalid status',()=>{assert.equal(validateImportRow('subcompanies',{name:'Branch',companyId:'9',isActive:'maybe'},mapping,[2]).errors.length,2);});
+test('missing status is an error',()=>{assert.equal(validateImportRow('subcompanies',{name:'Branch',companyId:'2',isActive:''},mapping,[2]).errors.length,1);});
+test('reject oversized, empty and nested data',()=>{assert.throws(()=>flatRecords(Array(501).fill({name:'x'})));assert.throws(()=>flatRecords([]));assert.throws(()=>flatRecords([{name:{nested:true}}]));});
+test('preserve leading zero codes',()=>{const row={name:'Test',address:'Tehran',companyID:'001',companycode:'009',isActive:'false'};const r=validateImportRow('companies',row,Object.fromEntries(Object.keys(row).map(k=>[k,k])),[]);assert.equal(r.errors.length,0);assert.equal(r.data.companycode,'009');assert.equal(r.data.isActive,false);});

@@ -182,3 +182,13 @@ Reference: [Cloudflare account home](https://dash.cloudflare.com/6bdbf200cb2a91e
 - A production Next.js process successfully proxied CRUD through the existing ASP.NET Core API to SQL Server. The temporary verification record was removed.
 
 `npm run format` formats the frontend source using Prettier.
+
+## Import center (مرکز ورود)
+
+Open `/dashboard/import-center` to import new companies or subcompanies. Supports Excel `.xlsx`, XML files, JSON APIs (GET), and XML/SOAP 1.1 services (GET/POST). Limits: 5 MB, 500 records per batch; Excel up to 100 columns. Excel formulas are rejected; convert them to values. Download a template from the page.
+
+Map columns and review all validation errors before confirming. Subcompany `companyId` is the numeric parent record ID, not the business `companyID`. Existing company IDs/codes and subcompany name/parent pairs are flagged as duplicates. This is create-only, with no overwrite. Saves reuse authenticated existing CRUD endpoints and their BLL validation. Writes are sequential, not transactional: a failure stops the batch, preserving earlier successes. An uncertain network result must be checked in the destination before retrying. Download the results report before leaving the page.
+
+Remote reads run in the browser, require the source's CORS support, and do not persist tokens. API results must be an array or use the specified dot-separated array path. XML record elements contain scalar child elements. Pagination is manual. OAuth, WSDL discovery, SOAP 1.2 and background import jobs are not implemented.
+
+Validation tests: `node --test tests/import-data.test.cjs`.

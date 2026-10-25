@@ -1,6 +1,11 @@
 "use client";
 
 import Link from "next/link";
+import { ChangePasswordForm } from "@/components/change-password-form";
+import dynamic from "next/dynamic";
+const ImportCenter = dynamic(() =>
+  import("@/components/import-center").then((m) => m.ImportCenter),
+);
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
@@ -100,7 +105,8 @@ type View =
   | "reports-shifts"
   | "reports-gas"
   | "production-companies"
-  | "customers";
+  | "customers"
+  | "import-center";
 type ProductFields = {
   name: string;
   description: string;
@@ -144,6 +150,7 @@ const titleFor: Record<View, string> = {
   "reports-shifts": "گزارشات شیفت",
   "production-companies": "شرکت‌های تولیدی",
   customers: "مشتریان",
+  "import-center": "مرکز ورود",
 };
 
 async function errorMessage(response: Response) {
@@ -655,6 +662,15 @@ export function Dashboard({
               ))}
             </ul>
           </NavCollapse>
+          <Link
+            href="/dashboard/import-center"
+            className={cn("nav-item", view === "import-center" && "active")}
+            aria-current={view === "import-center" ? "page" : undefined}
+            onClick={() => setMobile(false)}
+          >
+            <Download />
+            <span>مرکز ورود</span>
+          </Link>
           <Link
             href="/dashboard/customers"
             className={cn("nav-item", view === "customers" && "active")}
@@ -1358,6 +1374,7 @@ export function Dashboard({
             </section>
           )}
 
+          {view === "import-center" && <ImportCenter />}
           {view === "customers" && (
             <section className="workspace-page">
               <div className="page-heading">
@@ -1628,7 +1645,7 @@ export function Dashboard({
                       </div>
                     </dl>
                     <div className="settings-panel-footer">
-                      <p>اطلاعات ورود توسط مدیر سرور مدیریت می‌شود.</p>
+                      <p>برای تغییر رمز عبور از فرم زیر استفاده کنید.</p>
                       <Button
                         variant="outline"
                         onClick={() => setHelp("support")}
@@ -1637,6 +1654,7 @@ export function Dashboard({
                       </Button>
                     </div>
                   </div>
+                  <ChangePasswordForm />
                 </TabsContent>
                 <TabsContent value="security">
                   <div className="settings-panel">

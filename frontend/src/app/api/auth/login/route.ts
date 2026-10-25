@@ -4,7 +4,7 @@ import {
   sameOrigin,
   SESSION_AGE,
   SESSION_COOKIE,
-  verifyCredentials,
+  accountRequest,
 } from "@/lib/auth";
 
 const attempts = new Map<string, { count: number; reset: number }>();
@@ -31,30 +31,35 @@ export async function POST(request: Request) {
       { status: 429 },
     );
   try {
-    const { email, password } = await request.json();
+    const { email, password, persistent } = await request.json();
     bucket.count++;
     attempts.set(ip, bucket);
     if (
       typeof email !== "string" ||
       typeof password !== "string" ||
-      password.length > 256 ||
-      !verifyCredentials(email.trim(), password)
+      email.length > 254 || password.length === 0 || password.length > 256
     ) {
       return NextResponse.json(
         { error: "The email or password is incorrect." },
         { status: 401 },
       );
     }
+    const verification = await accountRequest("verify", { email: email.trim(), password });
+    if (!verification.ok) return NextResponse.json(
+      { error: "Sign-in failed." },
+      { status: verification.status === 429 ? 429 : verification.status === 401 || verification.status === 400 ? 401 : 503 },
+    );
+    const { stamp } = await verification.json();
     const response = NextResponse.json({ ok: true });
     response.cookies.set(
       SESSION_COOKIE,
-      createSession(email.trim().toLowerCase()),
+      createSession(email.trim().toLowerCase(), stamp),
       {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         path: "/",
-        maxAge: SESSION_AGE,
+        ...(persistent === false ? {} : { maxAge: SESSION_AGE }),
       },
     );
     attempts.delete(ip);

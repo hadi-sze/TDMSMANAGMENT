@@ -398,8 +398,21 @@ export function SubCompaniesPanel({ mode }: { mode: "api" | "demo" }) {
                         <td data-label="وضعیت">
                           <Chip
                             color={item.isActive ? "success" : "neutral"}
-                            size="sm"
+                            size="md"
                             variant="soft"
+                            sx={{
+                              minWidth: 64,
+                              minHeight: 28,
+                              justifyContent: "center",
+                              textAlign: "center",
+                              "& .MuiChip-label": {
+                                width: "100%",
+                                textAlign: "center",
+                              },
+                              fontSize: 13,
+                              fontWeight: 600,
+                              px: 1.25,
+                            }}
                           >
                             {item.isActive ? "فعال" : "غیرفعال"}
                           </Chip>

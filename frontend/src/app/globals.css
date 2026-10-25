@@ -3680,7 +3680,9 @@ html:lang(fa)
 
 /* Keep popup positioning independent from its entrance animation. */
 .animated-filter-select {
-  transition: border-color 160ms ease, background-color 160ms ease,
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
     box-shadow 160ms ease !important;
 }
 .animated-filter-select .MuiSelect-indicator {
@@ -3690,11 +3692,19 @@ html:lang(fa)
   animation: filter-listbox-enter 180ms ease-out;
 }
 .animated-filter-listbox .MuiOption-root {
-  transition: background-color 140ms ease, color 140ms ease;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
 }
 @keyframes filter-listbox-enter {
-  from { opacity: 0; translate: 0 -4px; }
-  to { opacity: 1; translate: 0 0; }
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .animated-filter-select,
@@ -3702,5 +3712,102 @@ html:lang(fa)
   .animated-filter-listbox .MuiOption-root {
     transition: none !important;
   }
-  .animated-filter-listbox { animation: none; }
+  .animated-filter-listbox {
+    animation: none;
+  }
+}
+
+.import-center {
+  display: grid;
+  gap: 20px;
+}
+.import-center > .page-heading {
+  border-bottom: 1px solid #e0e5ed;
+  padding-bottom: 20px;
+  margin-bottom: 0;
+}
+.import-card {
+  background: #fff;
+  border: 1px solid #e0e5ed;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 0;
+}
+.import-card h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+.import-card p {
+  color: #52627a;
+  line-height: 1.9;
+  margin: 12px 0;
+  font-size: 14px;
+}
+.import-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 20px 0;
+  border: 0;
+  padding: 0;
+}
+.import-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  min-width: 0;
+}
+.import-wide {
+  grid-column: 1 / -1;
+}
+.import-fields textarea {
+  border: 1px solid #ccd4df;
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+}
+.import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+.import-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.import-table th,
+.import-table td {
+  padding: 14px 12px;
+  text-align: start;
+  border-bottom: 1px solid #e0e5ed;
+  max-width: 300px;
+  overflow-wrap: anywhere;
+}
+.import-table th {
+  background: #f5f7fa;
+  white-space: nowrap;
+}
+.import-card pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: #f5f7fa;
+  padding: 16px;
+  margin-top: 16px;
+}
+.import-card summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+@media (max-width: 640px) {
+  .import-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .import-card {
+    padding: 16px;
+  }
 }
