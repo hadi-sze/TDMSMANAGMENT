@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ChangePasswordForm } from "@/components/change-password-form";
+import { AccountSettings } from "@/components/account-settings";
 import dynamic from "next/dynamic";
 const ImportCenter = dynamic(() =>
   import("@/components/import-center").then((m) => m.ImportCenter),
@@ -87,7 +87,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { cn } from "@/lib/utils";
 import type { Product } from "@/lib/products";
 
@@ -1592,139 +1592,7 @@ export function Dashboard({
           )}
 
           {view === "settings" && (
-            <section className="workspace-page settings-page">
-              <div className="page-heading">
-                <div>
-                  <span className="section-eyebrow">فضای کاری خودتان</span>
-                  <h1>تنظیمات حساب کاربری</h1>
-                  <p>فضای کاری و اطلاعات لازم برای مدیریت آن.</p>
-                </div>
-              </div>
-              <Tabs defaultValue="account">
-                <TabsList>
-                  <TabsTrigger value="account">حساب کاربری</TabsTrigger>
-                  <TabsTrigger value="security">امنیت و اتصال</TabsTrigger>
-                </TabsList>
-                <TabsContent value="account">
-                  <div className="settings-panel">
-                    <div className="settings-panel-header">
-                      <span className="settings-avatar">
-                        <UserRound />
-                      </span>
-                      <div>
-                        <h2>مدیر فضای کاری</h2>
-                        <p>
-                          <bdi dir="ltr">{email}</bdi>
-                        </p>
-                      </div>
-                      <span className="subtle-pill">مدیر</span>
-                    </div>
-                    <dl className="settings-details">
-                      <div>
-                        <dt>نام فضای کاری</dt>
-                        <dd>فضای کاری TDMS</dd>
-                      </div>
-                      <div>
-                        <dt>برنامه</dt>
-                        <dd>TDMSMANAGMENT</dd>
-                      </div>
-                      <div>
-                        <dt>ایمیل حساب کاربری</dt>
-                        <dd>
-                          <bdi dir="ltr">{email}</bdi>
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>حالت فضای کاری</dt>
-                        <dd>
-                          <span className="status-dot" />
-                          {mode === "demo"
-                            ? "فضای کاری آزمایشی محلی"
-                            : "فضای کاری متصل به سرویس"}
-                        </dd>
-                      </div>
-                    </dl>
-                    <div className="settings-panel-footer">
-                      <p>برای تغییر رمز عبور از فرم زیر استفاده کنید.</p>
-                      <Button
-                        variant="outline"
-                        onClick={() => setHelp("support")}
-                      >
-                        دریافت راهنما <ArrowUpRight />
-                      </Button>
-                    </div>
-                  </div>
-                  <ChangePasswordForm />
-                </TabsContent>
-                <TabsContent value="security">
-                  <div className="settings-panel">
-                    <div className="settings-panel-header">
-                      <span className="settings-avatar">
-                        <ShieldCheck />
-                      </span>
-                      <div>
-                        <h2>دسترسی و اتصال</h2>
-                        <p>اطلاعات ضروری در یک جا.</p>
-                      </div>
-                    </div>
-                    <dl className="settings-details">
-                      <div>
-                        <dt>نشست کاربری</dt>
-                        <dd>
-                          <span className="status-dot" /> وارد شده · اعتبار
-                          نشست: ۸ ساعت
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>امنیت نشست</dt>
-                        <dd>کوکی نشست امضاشده با دسترسی محدود به سرور</dd>
-                      </div>
-                      <div>
-                        <dt>منبع داده</dt>
-                        <dd>
-                          {mode === "demo"
-                            ? "ذخیره‌سازی محلی داده‌های آزمایشی"
-                            : "سرویس دات‌نت"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>دسترسی به سرویس</dt>
-                        <dd>
-                          اتصال از طریق سرور · بدون نگهداری اطلاعات دسترسی در
-                          مرورگر
-                        </dd>
-                      </div>
-                      <div>
-                        <dt>تنظیم اتصال</dt>
-                        <dd>
-                          <code>TDMS_DATA_SOURCE / TDMS_API_BASE_URL</code>
-                        </dd>
-                      </div>
-                    </dl>
-                    <div className="settings-panel-footer">
-                      <p>
-                        تنظیمات سرور در فایل محیطی رابط کاربری مشخص می‌شوند.
-                      </p>
-                      <Button
-                        variant="outline"
-                        onClick={() => setHelp("guide")}
-                      >
-                        راهنمای اتصال <ArrowUpRight />
-                      </Button>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-              <div className="signout-panel">
-                <div>
-                  <h3>فعلاً کارتان تمام شده؟</h3>
-                  <p>برای پایان دادن به نشست در این دستگاه، خارج شوید.</p>
-                </div>
-                <Button variant="outline" onClick={() => void logout()}>
-                  <LogOut /> خروج از حساب
-                </Button>
-              </div>
-            </section>
+            <AccountSettings email={email} mode={mode} onHelp={setHelp} onLogout={() => void logout()} />
           )}
         </main>
         <footer className="app-footer">
@@ -2226,3 +2094,4 @@ function ErrorState({
     </div>
   );
 }
+

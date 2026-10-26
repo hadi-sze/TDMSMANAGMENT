@@ -2,11 +2,13 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import Button from "@mui/joy/Button";
-import Input from "@mui/joy/Input";
-import FormControl from "@mui/joy/FormControl";
-import FormLabel from "@mui/joy/FormLabel";
-import Alert from "@mui/joy/Alert";
+import Button from "@mui/material/Button";
+import TextField from "@mui/material/TextField";
+import Card from "@mui/material/Card";
+import Typography from "@mui/material/Typography";
+import Alert from "@mui/material/Alert";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
 
 export function ChangePasswordForm() {
   const router = useRouter();
@@ -33,25 +35,25 @@ export function ChangePasswordForm() {
     } catch { setError("ارتباط با سرور برقرار نشد. دوباره تلاش کنید."); }
     finally { setPending(false); }
   }
-  return <section className="settings-panel" style={{ marginTop: 24, padding: 24 }} aria-labelledby="password-heading">
-    <h2 id="password-heading">تغییر رمز عبور</h2>
-    <p style={{ marginBlock: 12 }}>رمز جدید باید حداقل ۱۲ نویسه باشد. پس از تغییر رمز، همه نشست‌ها پایان می‌یابد و باید دوباره وارد شوید.</p>
+  return <Card component="section" sx={{ mt: 3, p: { xs: 2, sm: 3 } }} aria-labelledby="password-heading">
+    <Typography component="h2" variant="h6" id="password-heading">تغییر رمز عبور</Typography>
+    <Typography color="text.secondary" variant="body2" sx={{ my: 2, lineHeight: 2 }}>رمز جدید باید حداقل ۱۲ نویسه باشد. پس از تغییر رمز، همه نشست‌ها پایان می‌یابد و باید دوباره وارد شوید.</Typography>
     {success ? <div>
-      <Alert color="success" role="status">رمز عبور با موفقیت تغییر کرد.</Alert>
+      <Alert severity="success" role="status">رمز عبور با موفقیت تغییر کرد.</Alert>
       <Button sx={{ mt: 2 }} onClick={() => { router.replace("/login"); router.refresh(); }}>ورود با رمز جدید</Button>
     </div> : <form onSubmit={submit} style={{ display: "grid", gap: 16, maxWidth: 460 }}>
       {([
         ["currentPassword", "رمز عبور فعلی", "current-password"],
         ["newPassword", "رمز عبور جدید", "new-password"],
         ["confirmPassword", "تکرار رمز عبور جدید", "new-password"],
-      ] as const).map(([name, label, autoComplete]) => <FormControl key={name} required>
-        <FormLabel htmlFor={name}>{label}</FormLabel>
-        <Input name={name} type={visible ? "text" : "password"} autoComplete={autoComplete} disabled={pending}
-          slotProps={{ input: { id: name, dir: "ltr", minLength: name === "currentPassword" ? 1 : 12, maxLength: 256 } }} />
-      </FormControl>)}
-      <label style={{ display: "flex", gap: 8, alignItems: "center" }}><input type="checkbox" checked={visible} disabled={pending} onChange={e => setVisible(e.target.checked)} />نمایش رمزها</label>
-      {error && <Alert color="danger" role="alert">{error}</Alert>}
-      <Button type="submit" loading={pending}>ذخیره رمز جدید</Button>
+      ] as const).map(([name, label, autoComplete]) => <TextField key={name} required fullWidth id={name} label={label}
+        name={name} type={visible ? "text" : "password"} autoComplete={autoComplete} disabled={pending}
+        helperText={name === "newPassword" ? "۱۲ تا ۲۵۶ نویسه، متفاوت از رمز فعلی" : undefined}
+        slotProps={{ htmlInput: { dir: "ltr", minLength: name === "currentPassword" ? 1 : 12, maxLength: 256 } }} />)}
+      <FormControlLabel control={<Checkbox checked={visible} disabled={pending} onChange={e => setVisible(e.target.checked)} />} label="نمایش رمزها" />
+      {error && <Alert severity="error" role="alert">{error}</Alert>}
+      <Button type="submit" variant="contained" loading={pending}>ذخیره رمز جدید</Button>
     </form>}
-  </section>;
+  </Card>;
 }
+
