@@ -3,6 +3,8 @@ using TDMSMANAGMENT.BLL;
 using TDMSMANAGMENT.DAL;
 using TDMSMANAGMENT.BLL.Services;
 using System.Threading.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using TDMSMANAGMENT.DAL.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -26,6 +28,8 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
+    if (app.Environment.IsDevelopment())
+        await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
     var password = builder.Configuration["TDMS_LOGIN_PASSWORD"];
     if (string.IsNullOrWhiteSpace(password) && !app.Environment.IsDevelopment())
         throw new InvalidOperationException("Set TDMS_LOGIN_PASSWORD for initial account provisioning.");
@@ -33,6 +37,7 @@ using (var scope = app.Services.CreateScope())
         builder.Configuration["TDMS_LOGIN_EMAIL"] ?? "admin@tdms.local", password ?? "TdmsDemo!2026");
 }
 app.UseExceptionHandler();
+app.UseRouting();
 app.UseRateLimiter();
 app.UseStatusCodePages();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
